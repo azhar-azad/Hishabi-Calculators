@@ -49,7 +49,8 @@ Hishabi-Calculators/
 Until the user says otherwise:
 
 - **User types** production source code (Java, TypeScript), test code, and configuration files (`application.yml`, `pom.xml` edits, `vitest.config.ts`, etc.). Claude proposes the code blocks with full file paths; user signals completion with **"done"**.
-- **Claude drives** scaffolding generators (Spring Initializr, `create-next-app`), CI/YAML files, auto-formatter output (`./mvnw spotless:apply`), `npm install` commands, doc files (`CLAUDE.md`, `PLAN.md`, `PROGRESS.md`), and trivial mechanical fixes surfaced by tests or code-review (typos, single-line corrections). Substantive logic fixes go back to the user.
+- **Claude drives** scaffolding generators (Spring Initializr, `create-next-app`), CI/YAML files, auto-formatter output (`./mvnw spotless:apply`), `npm install` commands, and doc files (`CLAUDE.md`, `PLAN.md`, `PROGRESS.md`).
+- **Fixes follow original ownership.** If the user typed the code, the user also types fixes surfaced by tests or code-review — even trivial typos. If Claude wrote/generated the code, Claude applies fixes. No "Claude edits trivial typos in user code" carve-out.
 - After user signals "done", Claude reads the typed files to confirm they match, runs tests, performs the slice's code-review, updates PROGRESS, commits, and pushes.
 
 This convention can be revoked at any time with an explicit "I'm done typing code".

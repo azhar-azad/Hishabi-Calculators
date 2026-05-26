@@ -46,7 +46,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Wire validation (`MethodArgumentNotValidException`), generic 500, and a `NotFoundException` placeholder~~ — three `@ExceptionHandler` methods. `handleGenerics` catches `RuntimeException` (narrowed from `Exception`) so Spring's framework exceptions (`NoResourceFoundException`, etc.) fall through to Spring's defaults and get correct 4xx codes
 - [x] ~~Test: deliberate-throw path returns expected JSON; validation error returns 400 with field errors~~ — `GlobalExceptionHandlerTest` with inner `TestThrowController` (explicitly `@Import`-ed) covers NotFound→404, generic→500 (without leaking internals), validation→400 with field errors, plus a regression test that unmapped paths produce Spring's default 404
 - [x] ~~Self code-review (medium)~~ — three-angle inline review surfaced the broad-catch issue (fixed inline)
-- [ ] Commit `feat(backend): add global exception handler`; push
+- [x] ~~Commit `feat(backend): add global exception handler`; push~~ — committed as `4801792`, pushed to `origin/code`
 
 ### 1.5 — CORS config
 - [ ] CORS config allowing frontend dev origin (`http://localhost:3000`), reading allowed origins from `app.cors.allowed-origins` property
