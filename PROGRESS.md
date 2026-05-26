@@ -33,12 +33,12 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~`application.yml`: shared defaults + `application-dev.yml` (H2 or local Postgres, decide and record in PLAN.md §2) + `application-prod.yml` (env-driven `DB_URL` / `DB_USER` / `DB_PASSWORD`)~~ — dev DB = H2 in-memory (PostgreSQL mode), recorded in PLAN.md §2. H2 dep promoted from `test` to `runtime` scope so dev runtime sees it. `spring.profiles.active: dev` set as default in `application.yml`
 - [x] ~~Test: `@ActiveProfiles("dev")` boot smoke test; `@ActiveProfiles("prod")` boot test with env vars supplied~~ — `DevProfileBootTest` (asserts H2 datasource URL) + `ProdProfileBootTest` (boots with prod profile + property overrides to H2; full Postgres prod-shape coverage deferred to slice 1.8 Testcontainers)
 - [x] ~~Self code-review (medium)~~ — three-angle inline review; one PLAUSIBLE finding (default-active dev profile is a deployment footgun if env var missing) deferred to slice 6.4 — see below
-- [ ] Commit `chore(backend): add dev/prod profiles`; push
+- [x] ~~Commit `chore(backend): add dev/prod profiles`; push~~ — committed as `07c5ebe`, pushed to `origin/code`
 
 ### 1.3 — Health endpoint
-- [ ] Implement `GET /api/health` returning `{ "status": "ok" }`
-- [ ] Test: `HealthControllerTest` (200 OK + JSON shape)
-- [ ] Self code-review (medium)
+- [x] ~~Implement `GET /api/health` returning `{ "status": "ok" }`~~ — `HealthController` + `HealthResponse` record under `platform.health` package per PLAN.md §4
+- [x] ~~Test: `HealthControllerTest` (200 OK + JSON shape)~~ — `@WebMvcTest` slice test with `@AutoConfigureMockMvc(addFilters = false)` to bypass Spring Security default auth (real "permit /api/health" config lands in slice 1.5)
+- [x] ~~Self code-review (medium)~~ — three-angle inline review; no actionable findings
 - [ ] Commit `feat(backend): add /api/health endpoint`; push
 
 ### 1.4 — Global exception handler
