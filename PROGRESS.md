@@ -52,13 +52,13 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~CORS config allowing frontend dev origin (`http://localhost:3000`), reading allowed origins from `app.cors.allowed-origins` property~~ — `CorsProperties` record (with `@DefaultValue` empty-list fallback) bound from `app.cors.allowed-origins`; `dev` profile sets `http://localhost:3000`; prod CORS deferred to slice 6.4 (env-var driven)
 - [x] ~~Test: preflight `OPTIONS` returns proper `Access-Control-Allow-*` headers~~ — `CorsConfigTest` covers allowed origin (200 + headers) and disallowed origin (403). Also necessitated a minimal `SecurityConfig` (CSRF disabled, STATELESS sessions, `anyRequest().permitAll()` — slice 5.4 will tighten with JWT + real allowlist)
 - [x] ~~Self code-review (medium)~~ — three-angle inline review; no actionable findings
-- [ ] Commit `feat(backend): add CORS config`; push
+- [x] ~~Commit `feat(backend): add CORS config`; push~~ — committed as `7c8824c`, pushed to `origin/code`
 
 ### 1.6 — Spotless (Google Java Format)
-- [ ] Add Spotless Maven plugin, bind `check` to `verify`
-- [ ] Run `./mvnw spotless:apply` to format existing code
-- [ ] Verify `./mvnw spotless:check` clean
-- [ ] Self code-review (medium)
+- [x] ~~Add Spotless Maven plugin, bind `check` to `verify`~~ — `com.diffplug.spotless:spotless-maven-plugin:2.46.1` with googleJavaFormat + removeUnusedImports + importOrder + trimTrailingWhitespace + endWithNewline
+- [x] ~~Run `./mvnw spotless:apply` to format existing code~~ — 13 files reformatted to Google Java Format (2-space indent + Google import order); 1 file was already clean
+- [x] ~~Verify `./mvnw spotless:check` clean~~ — `./mvnw verify` green: spotless:check passes + all 10 tests green
+- [x] ~~Self code-review (medium)~~ — inline review; cosmetic-only diff to 13 files (no semantic changes); test suite all green confirms no behavior regression
 - [ ] Commit `chore(backend): add Spotless (Google Java Format)`; push
 
 ### 1.7 — JaCoCo coverage reporting
