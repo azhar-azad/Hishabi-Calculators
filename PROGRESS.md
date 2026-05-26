@@ -39,13 +39,13 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Implement `GET /api/health` returning `{ "status": "ok" }`~~ — `HealthController` + `HealthResponse` record under `platform.health` package per PLAN.md §4
 - [x] ~~Test: `HealthControllerTest` (200 OK + JSON shape)~~ — `@WebMvcTest` slice test with `@AutoConfigureMockMvc(addFilters = false)` to bypass Spring Security default auth (real "permit /api/health" config lands in slice 1.5)
 - [x] ~~Self code-review (medium)~~ — three-angle inline review; no actionable findings
-- [ ] Commit `feat(backend): add /api/health endpoint`; push
+- [x] ~~Commit `feat(backend): add /api/health endpoint`; push~~ — committed as `f6429d7`, pushed to `origin/code`
 
 ### 1.4 — Global exception handler
-- [ ] `@RestControllerAdvice` returning a consistent error shape: `{ timestamp, status, code, message, path }`
-- [ ] Wire validation (`MethodArgumentNotValidException`), generic 500, and a `NotFoundException` placeholder
-- [ ] Test: deliberate-throw path returns expected JSON; validation error returns 400 with field errors
-- [ ] Self code-review (medium)
+- [x] ~~`@RestControllerAdvice` returning a consistent error shape: `{ timestamp, status, code, message, path }`~~ — `ApiError` record with optional `fieldErrors` (hidden via `@JsonInclude(NON_NULL)` when null) under `platform.error`
+- [x] ~~Wire validation (`MethodArgumentNotValidException`), generic 500, and a `NotFoundException` placeholder~~ — three `@ExceptionHandler` methods. `handleGenerics` catches `RuntimeException` (narrowed from `Exception`) so Spring's framework exceptions (`NoResourceFoundException`, etc.) fall through to Spring's defaults and get correct 4xx codes
+- [x] ~~Test: deliberate-throw path returns expected JSON; validation error returns 400 with field errors~~ — `GlobalExceptionHandlerTest` with inner `TestThrowController` (explicitly `@Import`-ed) covers NotFound→404, generic→500 (without leaking internals), validation→400 with field errors, plus a regression test that unmapped paths produce Spring's default 404
+- [x] ~~Self code-review (medium)~~ — three-angle inline review surfaced the broad-catch issue (fixed inline)
 - [ ] Commit `feat(backend): add global exception handler`; push
 
 ### 1.5 — CORS config
