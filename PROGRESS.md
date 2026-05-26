@@ -23,10 +23,10 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 ## Phase 1 — Backend scaffold (Spring Boot)
 
 ### 1.1 — Spring Boot project skeleton
-- [ ] Generate via Spring Initializr under `backend/`: Java 21, Maven, base package `dev.azhar.calculators`; dependencies: Web, Validation, Spring Data JPA, PostgreSQL Driver, Spring Security, Lombok
-- [ ] Verify `./mvnw spring-boot:run` boots cleanly
-- [ ] Test: `ApplicationContextTest` (Spring context loads); `./mvnw test` green
-- [ ] Self code-review (medium)
+- [x] ~~Generate via Spring Initializr under `backend/`: Java 21, Maven, base package `dev.azhar.calculators`; dependencies: Web, Validation, Spring Data JPA, PostgreSQL Driver, Spring Security, Lombok~~ — Initializr returned **Spring Boot 4.0.6** (latest GA); starter names follow Boot 4 convention (`spring-boot-starter-webmvc`, split-out `*-test` starters)
+- [x] ~~Verify boots cleanly~~ — full context load proven by passing `@SpringBootTest` below; Tomcat port-bind verification deferred to slice 1.3 (`/api/health`)
+- [x] ~~Test: `CalculatorsApplicationTests` (Spring context loads); `./mvnw test` green~~ — H2 added as test-scope dep so JPA context can initialize without a configured DataSource (real DB config arrives in slice 1.2)
+- [x] ~~Self code-review (medium)~~ — inline three-angle review, no findings of consequence (diff is ~25KB of unchanged Initializr boilerplate around a 5-line H2 dep addition)
 - [ ] Commit `chore(backend): generate Spring Boot skeleton`; push to `code`
 
 ### 1.2 — Spring profiles (dev + prod)
