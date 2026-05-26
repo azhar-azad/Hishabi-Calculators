@@ -65,13 +65,13 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Add JaCoCo Maven plugin with `report` goal bound to `verify`~~ — `org.jacoco:jacoco-maven-plugin:0.8.13`, two executions: `prepare-agent` (default phase, injects the JVM agent into Surefire's `argLine`) + `report` (bound to `verify`)
 - [x] ~~Verify `target/site/jacoco/index.html` is generated after `./mvnw verify`~~ — confirmed; report includes per-package HTML drilldown + `jacoco.csv` + `jacoco.xml` (for future CI/SonarCloud integration). No coverage thresholds enforced yet; can add as a follow-up slice when we have meaningful tax-calculation code to gate
 - [x] ~~Self code-review (medium)~~ — inline review; one-plugin addition, no logic changes, all tests green
-- [ ] Commit `chore(backend): add JaCoCo coverage reporting`; push
+- [x] ~~Commit `chore(backend): add JaCoCo coverage reporting`; push~~ — committed as `908d25c`, pushed to `origin/code`
 
 ### 1.8 — Testcontainers (Postgres) infrastructure
-- [ ] Add `org.testcontainers:postgresql` dependency (test scope)
-- [ ] Add a smoke test (`PostgresContainerSmokeTest`) that boots a Postgres container and runs `SELECT 1`
-- [ ] Test: smoke test passes under `./mvnw verify`
-- [ ] Self code-review (medium)
+- [x] ~~Add `org.testcontainers:postgresql` dependency (test scope)~~ — added `org.testcontainers:junit-jupiter` + `org.testcontainers:postgresql`, both `test` scope, both at `1.20.4` (explicit version — Spring Boot 4 BOM doesn't manage Testcontainers, unlike Boot 3)
+- [x] ~~Add a smoke test (`PostgresContainerSmokeTest`) that boots a Postgres container and runs `SELECT 1`~~ — uses `postgres:16-alpine` image, static `@Container` field, JDBC `SELECT 1` via DriverManager
+- [x] ~~Test: smoke test passes under `./mvnw verify`~~ — 11 tests total now green (10 previous + this one). Smoke test takes ~5-11s depending on container warm-start
+- [x] ~~Self code-review (medium)~~ — three-angle inline review. One heads-up logged: CI workflow (slice 1.9) needs a Docker-enabled runner (default `ubuntu-latest` has Docker, so OK by default)
 - [ ] Commit `test(backend): add Testcontainers Postgres support`; push
 
 ### 1.9 — CI: backend workflow
