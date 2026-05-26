@@ -59,12 +59,12 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Run `./mvnw spotless:apply` to format existing code~~ — 13 files reformatted to Google Java Format (2-space indent + Google import order); 1 file was already clean
 - [x] ~~Verify `./mvnw spotless:check` clean~~ — `./mvnw verify` green: spotless:check passes + all 10 tests green
 - [x] ~~Self code-review (medium)~~ — inline review; cosmetic-only diff to 13 files (no semantic changes); test suite all green confirms no behavior regression
-- [ ] Commit `chore(backend): add Spotless (Google Java Format)`; push
+- [x] ~~Commit `chore(backend): add Spotless (Google Java Format)`; push~~ — committed as `6534df3`, pushed to `origin/code`
 
 ### 1.7 — JaCoCo coverage reporting
-- [ ] Add JaCoCo Maven plugin with `report` goal bound to `verify`
-- [ ] Verify `target/site/jacoco/index.html` is generated after `./mvnw verify`
-- [ ] Self code-review (medium)
+- [x] ~~Add JaCoCo Maven plugin with `report` goal bound to `verify`~~ — `org.jacoco:jacoco-maven-plugin:0.8.13`, two executions: `prepare-agent` (default phase, injects the JVM agent into Surefire's `argLine`) + `report` (bound to `verify`)
+- [x] ~~Verify `target/site/jacoco/index.html` is generated after `./mvnw verify`~~ — confirmed; report includes per-package HTML drilldown + `jacoco.csv` + `jacoco.xml` (for future CI/SonarCloud integration). No coverage thresholds enforced yet; can add as a follow-up slice when we have meaningful tax-calculation code to gate
+- [x] ~~Self code-review (medium)~~ — inline review; one-plugin addition, no logic changes, all tests green
 - [ ] Commit `chore(backend): add JaCoCo coverage reporting`; push
 
 ### 1.8 — Testcontainers (Postgres) infrastructure
