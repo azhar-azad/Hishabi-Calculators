@@ -72,11 +72,11 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Add a smoke test (`PostgresContainerSmokeTest`) that boots a Postgres container and runs `SELECT 1`~~ — uses `postgres:16-alpine` image, static `@Container` field, JDBC `SELECT 1` via DriverManager
 - [x] ~~Test: smoke test passes under `./mvnw verify`~~ — 11 tests total now green (10 previous + this one). Smoke test takes ~5-11s depending on container warm-start
 - [x] ~~Self code-review (medium)~~ — three-angle inline review. One heads-up logged: CI workflow (slice 1.9) needs a Docker-enabled runner (default `ubuntu-latest` has Docker, so OK by default)
-- [ ] Commit `test(backend): add Testcontainers Postgres support`; push
+- [x] ~~Commit `test(backend): add Testcontainers Postgres support`; push~~ — committed as `146139a`, pushed to `origin/code`
 
 ### 1.9 — CI: backend workflow
-- [ ] `.github/workflows/ci.yml` with backend job: checkout, setup JDK 21 (Temurin), cache Maven, `./mvnw verify`, upload JaCoCo report artifact
-- [ ] Triggers: PR to `main`, push to `code`
+- [x] ~~`.github/workflows/ci.yml` with backend job: checkout, setup JDK 21 (Temurin), cache Maven, `./mvnw verify`, upload JaCoCo report artifact~~
+- [x] ~~Triggers: PR to `main`, push to `code`~~
 - [ ] Verify green on GitHub after push
 - [ ] Self code-review (medium)
 - [ ] Commit `ci: backend test + coverage workflow`; push
