@@ -1,0 +1,110 @@
+# =====================================================================
+# Hishabi-Calculators — monorepo .gitignore
+# Root-level ignores covering both backend/ (Spring Boot) and frontend/ (Next.js).
+# Subprojects may add their own .gitignore for project-specific exclusions.
+# =====================================================================
+
+# ---- Java / Maven ----------------------------------------------------
+target/
+build/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+*.log
+
+# Spring Boot
+HELP.md
+application-local.yml
+application-local.yaml
+application-local.properties
+
+# Keep Maven Wrapper committed (do NOT ignore .mvn/wrapper/maven-wrapper.jar)
+
+# ---- Node / Next.js --------------------------------------------------
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+next-env.d.ts
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Yarn Berry (PnP)
+.pnp.*
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Vercel (in case we deploy frontend there)
+.vercel
+
+# ---- Environment / secrets -------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# ---- IDE / editor ----------------------------------------------------
+# JetBrains (IntelliJ, WebStorm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code (allow per-project shared settings later by un-ignoring specifics)
+.vscode/
+*.code-workspace
+
+# Visual Studio
+.vs/
+
+# Eclipse / STS
+.classpath
+.project
+.settings/
+.factorypath
+.springBeans
+.metadata
+bin/
+
+# NetBeans
+nbproject/private/
+
+# Sublime / Vim / Emacs
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
+\#*\#
+.\#*
+
+# ---- OS junk ---------------------------------------------------------
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ---- Misc ------------------------------------------------------------
+*.bak
+*.tmp
+.cache/
