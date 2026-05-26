@@ -16,14 +16,13 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc(addFilters = false)
 class HealthControllerTest {
 
-  @Autowired MockMvc mockMvc;
+    @Autowired MockMvc mockMvc;
 
-  @Test
-  void returnsOkStatus() throws Exception {
-    mockMvc
-        .perform(get("/api/health"))
-        .andExpect(status().isOk())
-        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-        .andExpect(jsonPath("$.status").value("ok"));
-  }
+    @Test
+    void returnsOkStatus() throws Exception {
+        mockMvc.perform(get("/api/health"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
 }

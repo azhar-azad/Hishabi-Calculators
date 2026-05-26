@@ -14,12 +14,12 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("dev")
 class DevProfileBootTest {
 
-  @Autowired DataSource dataSource;
+    @Autowired DataSource dataSource;
 
-  @Test
-  void devProfileWiresH2DataSource() throws SQLException {
-    try (Connection conn = dataSource.getConnection()) {
-      assertThat(conn.getMetaData().getURL()).contains("jdbc:h2:mem");
+    @Test
+    void devProfileWiresH2DataSource() throws SQLException {
+        try (Connection conn = dataSource.getConnection()) {
+            assertThat(conn.getMetaData().getURL()).contains("jdbc:h2:mem");
+        }
     }
-  }
 }

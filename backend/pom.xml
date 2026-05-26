@@ -140,7 +140,9 @@
 				<version>2.46.1</version>
 				<configuration>
 					<java>
-						<googleJavaFormat/>
+						<googleJavaFormat>
+							<style>AOSP</style>
+						</googleJavaFormat>
 						<removeUnusedImports/>
 						<importOrder/>
 						<trimTrailingWhitespace/>

@@ -18,28 +18,26 @@ import org.springframework.test.web.servlet.MockMvc;
 @TestPropertySource(properties = "app.cors.allowed-origins=http://localhost:3000")
 class CorsConfigTest {
 
-  @Autowired MockMvc mockMvc;
+    @Autowired MockMvc mockMvc;
 
-  @Test
-  void preflightFromAllowedOriginReturnsCorsHeaders() throws Exception {
-    mockMvc
-        .perform(
-            options("/api/health")
-                .header("Origin", "http://localhost:3000")
-                .header("Access-Control-Request-Method", "GET"))
-        .andExpect(status().isOk())
-        .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
-        .andExpect(header().string("Access-Control-Allow-Methods", containsString("GET")))
-        .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
-  }
+    @Test
+    void preflightFromAllowedOriginReturnsCorsHeaders() throws Exception {
+        mockMvc.perform(
+                        options("/api/health")
+                                .header("Origin", "http://localhost:3000")
+                                .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:3000"))
+                .andExpect(header().string("Access-Control-Allow-Methods", containsString("GET")))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
 
-  @Test
-  void preflightFromDisallowedOriginsRejected() throws Exception {
-    mockMvc
-        .perform(
-            options("/api/health")
-                .header("Origin", "https://evil.example.com")
-                .header("Access-Control-Request-Method", "GET"))
-        .andExpect(status().isForbidden());
-  }
+    @Test
+    void preflightFromDisallowedOriginsRejected() throws Exception {
+        mockMvc.perform(
+                        options("/api/health")
+                                .header("Origin", "https://evil.example.com")
+                                .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isForbidden());
+    }
 }
