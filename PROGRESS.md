@@ -27,12 +27,12 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Verify boots cleanly~~ — full context load proven by passing `@SpringBootTest` below; Tomcat port-bind verification deferred to slice 1.3 (`/api/health`)
 - [x] ~~Test: `CalculatorsApplicationTests` (Spring context loads); `./mvnw test` green~~ — H2 added as test-scope dep so JPA context can initialize without a configured DataSource (real DB config arrives in slice 1.2)
 - [x] ~~Self code-review (medium)~~ — inline three-angle review, no findings of consequence (diff is ~25KB of unchanged Initializr boilerplate around a 5-line H2 dep addition)
-- [ ] Commit `chore(backend): generate Spring Boot skeleton`; push to `code`
+- [x] ~~Commit `chore(backend): generate Spring Boot skeleton`; push to `code`~~ — committed as `d8bfbf0`, pushed to `origin/code`
 
 ### 1.2 — Spring profiles (dev + prod)
-- [ ] `application.yml`: shared defaults + `application-dev.yml` (H2 or local Postgres, decide and record in PLAN.md §2) + `application-prod.yml` (env-driven `DB_URL` / `DB_USER` / `DB_PASSWORD`)
-- [ ] Test: `@ActiveProfiles("dev")` boot smoke test; `@ActiveProfiles("prod")` boot test with env vars supplied
-- [ ] Self code-review (medium)
+- [x] ~~`application.yml`: shared defaults + `application-dev.yml` (H2 or local Postgres, decide and record in PLAN.md §2) + `application-prod.yml` (env-driven `DB_URL` / `DB_USER` / `DB_PASSWORD`)~~ — dev DB = H2 in-memory (PostgreSQL mode), recorded in PLAN.md §2. H2 dep promoted from `test` to `runtime` scope so dev runtime sees it. `spring.profiles.active: dev` set as default in `application.yml`
+- [x] ~~Test: `@ActiveProfiles("dev")` boot smoke test; `@ActiveProfiles("prod")` boot test with env vars supplied~~ — `DevProfileBootTest` (asserts H2 datasource URL) + `ProdProfileBootTest` (boots with prod profile + property overrides to H2; full Postgres prod-shape coverage deferred to slice 1.8 Testcontainers)
+- [x] ~~Self code-review (medium)~~ — three-angle inline review; one PLAUSIBLE finding (default-active dev profile is a deployment footgun if env var missing) deferred to slice 6.4 — see below
 - [ ] Commit `chore(backend): add dev/prod profiles`; push
 
 ### 1.3 — Health endpoint
@@ -385,7 +385,8 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [ ] (no commit — infra setup)
 
 ### 6.4 — Backend env config + deploy
-- [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`
+- [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`, **`SPRING_PROFILES_ACTIVE=prod`**
+- [ ] Add a fail-fast `EnvironmentPostProcessor` (or `ApplicationContextInitializer`) that errors at startup if `spring.profiles.active` is missing or contains `dev` — closes the slice 1.2 footgun where a forgotten `SPRING_PROFILES_ACTIVE=prod` would silently fall back to dev profile + H2 in-memory DB in production
 - [ ] Deploy backend image; verify `/api/health` and Flyway/Liquibase migrations ran
 - [ ] (no commit — infra deploy; capture deploy notes in PLAN.md if useful)
 
