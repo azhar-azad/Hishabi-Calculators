@@ -77,9 +77,9 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 ### 1.9 — CI: backend workflow
 - [x] ~~`.github/workflows/ci.yml` with backend job: checkout, setup JDK 21 (Temurin), cache Maven, `./mvnw verify`, upload JaCoCo report artifact~~
 - [x] ~~Triggers: PR to `main`, push to `code`~~
-- [ ] Verify green on GitHub after push
-- [ ] Self code-review (medium)
-- [ ] Commit `ci: backend test + coverage workflow`; push
+- [x] ~~Verify green on GitHub after push~~ — first run failed (`backend/mvnw` stored as non-executable from Windows checkout); fixed via `git update-index --chmod=+x` in commit `623caa0`. Re-run (run id 26470825402) green
+- [x] ~~Self code-review (medium)~~ — inline three-angle review; the mvnw chmod issue surfaced by CI itself (real-world feedback loop > local review)
+- [x] ~~Commit `ci: backend test + coverage workflow`; push~~ — committed as `35f8f52` (workflow) + `623caa0` (mvnw chmod fix), pushed to `origin/code`
 
 ---
 
