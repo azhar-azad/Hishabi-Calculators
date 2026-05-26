@@ -44,18 +44,18 @@ Hishabi-Calculators/
 8. **Confirm before destructive actions** — dropping DB tables, force-pushing, deleting branches, rewriting migrations that have been applied.
 9. **Windows/PowerShell environment.** Use PowerShell syntax in shell examples (`$env:VAR`, not `export VAR=`). Maven and Node both work fine cross-platform.
 
-## Per-phase workflow (binding)
+## Per-slice workflow (binding)
 
-Every phase in [PROGRESS.md](./PROGRESS.md) ends with this loop. No exceptions.
+[PROGRESS.md](./PROGRESS.md) is organized into **phases** (coarse groupings) and **slices** (the smallest commit-unit). **One slice = one commit.** Every slice ends with this loop. No exceptions.
 
-1. **Implement** the phase's items.
+1. **Implement** the slice's items.
 2. **Tests** — write/run tests for what was built. Red → green before moving on.
 3. **Self code-review** — run the `/code-review` skill on the diff at `medium` effort. Escalate to `high` for security, auth, or money/calculation logic.
 4. **Independent review (selective)** — for high-risk slices (auth flow, tax math, persistence migrations), spawn a fresh `code-reviewer` subagent on the diff. Cold context catches what self-review misses.
 5. **Fix** findings; re-run tests.
 6. **Update PROGRESS.md** checkboxes the moment each item is done.
-7. **Commit on `code` branch** using Conventional Commits format (`feat(backend): ...`, `test(tax): ...`, `chore: ...`). Reference the PROGRESS.md phase in the body.
-8. **Push to `code`**. User opens PR → `main`, reviews, merges.
+7. **Commit on `code` branch** using Conventional Commits format (`feat(backend): ...`, `test(tax): ...`, `chore: ...`). Reference the slice ID (e.g., "Slice 3.6") in the commit body.
+8. **Push to `code`** after each slice. PR `code` → `main` at natural checkpoints (typically end of phase, or whenever the user opens one). User reviews and merges.
 
 **Branching:** all work lands on `code`. Never commit directly to `main`. Never force-push.
 
