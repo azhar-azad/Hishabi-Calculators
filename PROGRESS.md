@@ -49,9 +49,9 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ~~Commit `feat(backend): add global exception handler`; push~~ — committed as `4801792`, pushed to `origin/code`
 
 ### 1.5 — CORS config
-- [ ] CORS config allowing frontend dev origin (`http://localhost:3000`), reading allowed origins from `app.cors.allowed-origins` property
-- [ ] Test: preflight `OPTIONS` returns proper `Access-Control-Allow-*` headers
-- [ ] Self code-review (medium)
+- [x] ~~CORS config allowing frontend dev origin (`http://localhost:3000`), reading allowed origins from `app.cors.allowed-origins` property~~ — `CorsProperties` record (with `@DefaultValue` empty-list fallback) bound from `app.cors.allowed-origins`; `dev` profile sets `http://localhost:3000`; prod CORS deferred to slice 6.4 (env-var driven)
+- [x] ~~Test: preflight `OPTIONS` returns proper `Access-Control-Allow-*` headers~~ — `CorsConfigTest` covers allowed origin (200 + headers) and disallowed origin (403). Also necessitated a minimal `SecurityConfig` (CSRF disabled, STATELESS sessions, `anyRequest().permitAll()` — slice 5.4 will tighten with JWT + real allowlist)
+- [x] ~~Self code-review (medium)~~ — three-angle inline review; no actionable findings
 - [ ] Commit `feat(backend): add CORS config`; push
 
 ### 1.6 — Spotless (Google Java Format)
