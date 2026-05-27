@@ -112,11 +112,11 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `feat(frontend): landing page placeholder`; push — committed as `45aeb69`, pushed to `origin/code`
 
 ### 2.5 — Prettier + strict TypeScript
-- [ ] Add Prettier with sensible defaults + `.prettierrc`
-- [ ] `tsconfig.json` `strict: true`
-- [ ] ESLint config: warnings → errors when `CI=true`
-- [ ] Run formatter + lint clean
-- [ ] Self code-review (medium)
+- [x] Add Prettier with sensible defaults + `.prettierrc` — installed `prettier@3.8.3`, `eslint-config-prettier@10.1.8`, `prettier-plugin-tailwindcss@0.8.0`. Typed by user: `frontend/.prettierrc` (minimal — only `singleQuote: true` + tailwind plugin; rest inherit Prettier 3 defaults: 2-space, semi, trailing-commas-all, 80-char) and `frontend/.prettierignore` (only `package-lock.json`; `.gitignore` already covers `node_modules`/`.next` and Prettier reads it natively)
+- [x] `tsconfig.json` `strict: true` — already on from `create-next-app` scaffold (line 7); no edit needed. Recorded here for traceability
+- [x] ESLint config: warnings → errors when `CI=true` — implemented as **always strict** via `"lint": "eslint --max-warnings=0"` (tighter than spec — simpler, encourages zero-warning baseline everywhere; loosen later if friction). `eslint.config.mjs` now imports `eslint-config-prettier/flat` and places it AFTER `nextVitals` + `nextTs` in the flat-config array so it overrides any formatting rules they ship
+- [x] Run formatter + lint clean — `npm run format` rewrote 9 files (single quotes, 2-space, sorted Tailwind classes via `prettier-plugin-tailwindcss`; e.g. page.tsx Link className collapsed from 2 lines to 1 and re-ordered). New scripts: `format`, `format:check`, plus convenience `check` = `lint && format:check && test` (npm scripts use cmd.exe on Windows — `&&` works). `npm run check` green; `npm run build` still prerenders `/` as static
+- [x] Self code-review (medium) — three-angle inline: prettier ordering correct (last in array → wins formatting overrides), `--max-warnings=0` typo caught + fixed (`eslint max-warnings=0` → `eslint --max-warnings=0`), no behavioral diffs (5/5 tests still pass). Follow-up: CLAUDE.md "Quality gates" section still references `npm run lint && npm test` — should be `npm run check`. Doc-only cleanup for a later slice
 - [ ] Commit `chore(frontend): Prettier + strict TS + tighter ESLint`; push
 
 ### 2.6 — API client helper
