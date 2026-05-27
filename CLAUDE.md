@@ -44,6 +44,17 @@ Hishabi-Calculators/
 8. **Confirm before destructive actions** — dropping DB tables, force-pushing, deleting branches, rewriting migrations that have been applied.
 9. **Windows/PowerShell environment.** Use PowerShell syntax in shell examples (`$env:VAR`, not `export VAR=`). Maven and Node both work fine cross-platform.
 
+## Authoring convention (current)
+
+Until the user says otherwise:
+
+- **User types** production source code (Java, TypeScript), test code, and configuration files (`application.yml`, `pom.xml` edits, `vitest.config.ts`, etc.). Claude proposes the code blocks with full file paths; user signals completion with **"done"**.
+- **Claude drives** scaffolding generators (Spring Initializr, `create-next-app`), CI/YAML files, auto-formatter output (`./mvnw spotless:apply`), `npm install` commands, and doc files (`CLAUDE.md`, `PLAN.md`, `PROGRESS.md`).
+- **Fixes follow original ownership.** If the user typed the code, the user also types fixes surfaced by tests or code-review — even trivial typos. If Claude wrote/generated the code, Claude applies fixes. No "Claude edits trivial typos in user code" carve-out.
+- After user signals "done", Claude reads the typed files to confirm they match, runs tests, performs the slice's code-review, updates PROGRESS, commits, and pushes.
+
+This convention can be revoked at any time with an explicit "I'm done typing code".
+
 ## Per-slice workflow (binding)
 
 [PROGRESS.md](./PROGRESS.md) is organized into **phases** (coarse groupings) and **slices** (the smallest commit-unit). **One slice = one commit.** Every slice ends with this loop. No exceptions.

@@ -12,85 +12,85 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 
 ## Phase 0 — Repo bootstrap
 
-- [-] ~~Initialize git repo~~ — handled by user (creates remote, runs `git init`, creates `code` branch)
-- [x] ~~Decide on package/product name~~ — Java package `dev.azhar.calculators`; product name **Hishabi** (PLAN.md §2)
-- [x] ~~Add `.gitignore` covering Java, Node, IDE files (`.idea/`, `.vscode/`), env files (`.env*`), build outputs (`target/`, `node_modules/`, `.next/`)~~
-- [x] ~~Create `backend/` and `frontend/` empty directories (with `.gitkeep` until scaffolded)~~
-- [x] ~~First commit on `code` branch: `chore: bootstrap monorepo (Phase 0)` — includes .gitignore + empty dirs; push to `code`~~ — committed as `bdaae0d "project plan documented"` and pushed to `origin/code`
+- [-] Initialize git repo — handled by user (creates remote, runs `git init`, creates `code` branch)
+- [x] Decide on package/product name — Java package `dev.azhar.calculators`; product name **Hishabi** (PLAN.md §2)
+- [x] Add `.gitignore` covering Java, Node, IDE files (`.idea/`, `.vscode/`), env files (`.env*`), build outputs (`target/`, `node_modules/`, `.next/`)
+- [x] Create `backend/` and `frontend/` empty directories (with `.gitkeep` until scaffolded)
+- [x] First commit on `code` branch: `chore: bootstrap monorepo (Phase 0)` — includes .gitignore + empty dirs; push to `code` — committed as `bdaae0d "project plan documented"` and pushed to `origin/code`
 
 ---
 
 ## Phase 1 — Backend scaffold (Spring Boot)
 
 ### 1.1 — Spring Boot project skeleton
-- [ ] Generate via Spring Initializr under `backend/`: Java 21, Maven, base package `dev.azhar.calculators`; dependencies: Web, Validation, Spring Data JPA, PostgreSQL Driver, Spring Security, Lombok
-- [ ] Verify `./mvnw spring-boot:run` boots cleanly
-- [ ] Test: `ApplicationContextTest` (Spring context loads); `./mvnw test` green
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(backend): generate Spring Boot skeleton`; push to `code`
+- [x] Generate via Spring Initializr under `backend/`: Java 21, Maven, base package `dev.azhar.calculators`; dependencies: Web, Validation, Spring Data JPA, PostgreSQL Driver, Spring Security, Lombok — Initializr returned **Spring Boot 4.0.6** (latest GA); starter names follow Boot 4 convention (`spring-boot-starter-webmvc`, split-out `*-test` starters)
+- [x] Verify boots cleanly — full context load proven by passing `@SpringBootTest` below; Tomcat port-bind verification deferred to slice 1.3 (`/api/health`)
+- [x] Test: `CalculatorsApplicationTests` (Spring context loads); `./mvnw test` green — H2 added as test-scope dep so JPA context can initialize without a configured DataSource (real DB config arrives in slice 1.2)
+- [x] Self code-review (medium) — inline three-angle review, no findings of consequence (diff is ~25KB of unchanged Initializr boilerplate around a 5-line H2 dep addition)
+- [x] Commit `chore(backend): generate Spring Boot skeleton`; push to `code` — committed as `d8bfbf0`, pushed to `origin/code`
 
 ### 1.2 — Spring profiles (dev + prod)
-- [ ] `application.yml`: shared defaults + `application-dev.yml` (H2 or local Postgres, decide and record in PLAN.md §2) + `application-prod.yml` (env-driven `DB_URL` / `DB_USER` / `DB_PASSWORD`)
-- [ ] Test: `@ActiveProfiles("dev")` boot smoke test; `@ActiveProfiles("prod")` boot test with env vars supplied
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(backend): add dev/prod profiles`; push
+- [x] `application.yml`: shared defaults + `application-dev.yml` (H2 or local Postgres, decide and record in PLAN.md §2) + `application-prod.yml` (env-driven `DB_URL` / `DB_USER` / `DB_PASSWORD`) — dev DB = H2 in-memory (PostgreSQL mode), recorded in PLAN.md §2. H2 dep promoted from `test` to `runtime` scope so dev runtime sees it. `spring.profiles.active: dev` set as default in `application.yml`
+- [x] Test: `@ActiveProfiles("dev")` boot smoke test; `@ActiveProfiles("prod")` boot test with env vars supplied — `DevProfileBootTest` (asserts H2 datasource URL) + `ProdProfileBootTest` (boots with prod profile + property overrides to H2; full Postgres prod-shape coverage deferred to slice 1.8 Testcontainers)
+- [x] Self code-review (medium) — three-angle inline review; one PLAUSIBLE finding (default-active dev profile is a deployment footgun if env var missing) deferred to slice 6.4 — see below
+- [x] Commit `chore(backend): add dev/prod profiles`; push — committed as `07c5ebe`, pushed to `origin/code`
 
 ### 1.3 — Health endpoint
-- [ ] Implement `GET /api/health` returning `{ "status": "ok" }`
-- [ ] Test: `HealthControllerTest` (200 OK + JSON shape)
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(backend): add /api/health endpoint`; push
+- [x] Implement `GET /api/health` returning `{ "status": "ok" }` — `HealthController` + `HealthResponse` record under `platform.health` package per PLAN.md §4
+- [x] Test: `HealthControllerTest` (200 OK + JSON shape) — `@WebMvcTest` slice test with `@AutoConfigureMockMvc(addFilters = false)` to bypass Spring Security default auth (real "permit /api/health" config lands in slice 1.5)
+- [x] Self code-review (medium) — three-angle inline review; no actionable findings
+- [x] Commit `feat(backend): add /api/health endpoint`; push — committed as `f6429d7`, pushed to `origin/code`
 
 ### 1.4 — Global exception handler
-- [ ] `@RestControllerAdvice` returning a consistent error shape: `{ timestamp, status, code, message, path }`
-- [ ] Wire validation (`MethodArgumentNotValidException`), generic 500, and a `NotFoundException` placeholder
-- [ ] Test: deliberate-throw path returns expected JSON; validation error returns 400 with field errors
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(backend): add global exception handler`; push
+- [x] `@RestControllerAdvice` returning a consistent error shape: `{ timestamp, status, code, message, path }` — `ApiError` record with optional `fieldErrors` (hidden via `@JsonInclude(NON_NULL)` when null) under `platform.error`
+- [x] Wire validation (`MethodArgumentNotValidException`), generic 500, and a `NotFoundException` placeholder — three `@ExceptionHandler` methods. `handleGenerics` catches `RuntimeException` (narrowed from `Exception`) so Spring's framework exceptions (`NoResourceFoundException`, etc.) fall through to Spring's defaults and get correct 4xx codes
+- [x] Test: deliberate-throw path returns expected JSON; validation error returns 400 with field errors — `GlobalExceptionHandlerTest` with inner `TestThrowController` (explicitly `@Import`-ed) covers NotFound→404, generic→500 (without leaking internals), validation→400 with field errors, plus a regression test that unmapped paths produce Spring's default 404
+- [x] Self code-review (medium) — three-angle inline review surfaced the broad-catch issue (fixed inline)
+- [x] Commit `feat(backend): add global exception handler`; push — committed as `4801792`, pushed to `origin/code`
 
 ### 1.5 — CORS config
-- [ ] CORS config allowing frontend dev origin (`http://localhost:3000`), reading allowed origins from `app.cors.allowed-origins` property
-- [ ] Test: preflight `OPTIONS` returns proper `Access-Control-Allow-*` headers
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(backend): add CORS config`; push
+- [x] CORS config allowing frontend dev origin (`http://localhost:3000`), reading allowed origins from `app.cors.allowed-origins` property — `CorsProperties` record (with `@DefaultValue` empty-list fallback) bound from `app.cors.allowed-origins`; `dev` profile sets `http://localhost:3000`; prod CORS deferred to slice 6.4 (env-var driven)
+- [x] Test: preflight `OPTIONS` returns proper `Access-Control-Allow-*` headers — `CorsConfigTest` covers allowed origin (200 + headers) and disallowed origin (403). Also necessitated a minimal `SecurityConfig` (CSRF disabled, STATELESS sessions, `anyRequest().permitAll()` — slice 5.4 will tighten with JWT + real allowlist)
+- [x] Self code-review (medium) — three-angle inline review; no actionable findings
+- [x] Commit `feat(backend): add CORS config`; push — committed as `7c8824c`, pushed to `origin/code`
 
 ### 1.6 — Spotless (Google Java Format)
-- [ ] Add Spotless Maven plugin, bind `check` to `verify`
-- [ ] Run `./mvnw spotless:apply` to format existing code
-- [ ] Verify `./mvnw spotless:check` clean
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(backend): add Spotless (Google Java Format)`; push
+- [x] Add Spotless Maven plugin, bind `check` to `verify` — `com.diffplug.spotless:spotless-maven-plugin:2.46.1` with googleJavaFormat + removeUnusedImports + importOrder + trimTrailingWhitespace + endWithNewline
+- [x] Run `./mvnw spotless:apply` to format existing code — 13 files reformatted to Google Java Format (2-space indent + Google import order); 1 file was already clean
+- [x] Verify `./mvnw spotless:check` clean — `./mvnw verify` green: spotless:check passes + all 10 tests green
+- [x] Self code-review (medium) — inline review; cosmetic-only diff to 13 files (no semantic changes); test suite all green confirms no behavior regression
+- [x] Commit `chore(backend): add Spotless (Google Java Format)`; push — committed as `6534df3`, pushed to `origin/code`
 
 ### 1.7 — JaCoCo coverage reporting
-- [ ] Add JaCoCo Maven plugin with `report` goal bound to `verify`
-- [ ] Verify `target/site/jacoco/index.html` is generated after `./mvnw verify`
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(backend): add JaCoCo coverage reporting`; push
+- [x] Add JaCoCo Maven plugin with `report` goal bound to `verify` — `org.jacoco:jacoco-maven-plugin:0.8.13`, two executions: `prepare-agent` (default phase, injects the JVM agent into Surefire's `argLine`) + `report` (bound to `verify`)
+- [x] Verify `target/site/jacoco/index.html` is generated after `./mvnw verify` — confirmed; report includes per-package HTML drilldown + `jacoco.csv` + `jacoco.xml` (for future CI/SonarCloud integration). No coverage thresholds enforced yet; can add as a follow-up slice when we have meaningful tax-calculation code to gate
+- [x] Self code-review (medium) — inline review; one-plugin addition, no logic changes, all tests green
+- [x] Commit `chore(backend): add JaCoCo coverage reporting`; push — committed as `908d25c`, pushed to `origin/code`
 
 ### 1.8 — Testcontainers (Postgres) infrastructure
-- [ ] Add `org.testcontainers:postgresql` dependency (test scope)
-- [ ] Add a smoke test (`PostgresContainerSmokeTest`) that boots a Postgres container and runs `SELECT 1`
-- [ ] Test: smoke test passes under `./mvnw verify`
-- [ ] Self code-review (medium)
-- [ ] Commit `test(backend): add Testcontainers Postgres support`; push
+- [x] Add `org.testcontainers:postgresql` dependency (test scope) — added `org.testcontainers:junit-jupiter` + `org.testcontainers:postgresql`, both `test` scope, both at `1.20.4` (explicit version — Spring Boot 4 BOM doesn't manage Testcontainers, unlike Boot 3)
+- [x] Add a smoke test (`PostgresContainerSmokeTest`) that boots a Postgres container and runs `SELECT 1` — uses `postgres:16-alpine` image, static `@Container` field, JDBC `SELECT 1` via DriverManager
+- [x] Test: smoke test passes under `./mvnw verify` — 11 tests total now green (10 previous + this one). Smoke test takes ~5-11s depending on container warm-start
+- [x] Self code-review (medium) — three-angle inline review. One heads-up logged: CI workflow (slice 1.9) needs a Docker-enabled runner (default `ubuntu-latest` has Docker, so OK by default)
+- [x] Commit `test(backend): add Testcontainers Postgres support`; push — committed as `146139a`, pushed to `origin/code`
 
 ### 1.9 — CI: backend workflow
-- [ ] `.github/workflows/ci.yml` with backend job: checkout, setup JDK 21 (Temurin), cache Maven, `./mvnw verify`, upload JaCoCo report artifact
-- [ ] Triggers: PR to `main`, push to `code`
-- [ ] Verify green on GitHub after push
-- [ ] Self code-review (medium)
-- [ ] Commit `ci: backend test + coverage workflow`; push
+- [x] `.github/workflows/ci.yml` with backend job: checkout, setup JDK 21 (Temurin), cache Maven, `./mvnw verify`, upload JaCoCo report artifact
+- [x] Triggers: PR to `main`, push to `code`
+- [x] Verify green on GitHub after push — first run failed (`backend/mvnw` stored as non-executable from Windows checkout); fixed via `git update-index --chmod=+x` in commit `623caa0`. Re-run (run id 26470825402) green
+- [x] Self code-review (medium) — inline three-angle review; the mvnw chmod issue surfaced by CI itself (real-world feedback loop > local review)
+- [x] Commit `ci: backend test + coverage workflow`; push — committed as `35f8f52` (workflow) + `623caa0` (mvnw chmod fix), pushed to `origin/code`
 
 ---
 
 ## Phase 2 — Frontend scaffold (Next.js)
 
 ### 2.1 — Next.js project skeleton
-- [ ] Decide Tailwind yes/no (record in PLAN.md §2)
-- [ ] Generate via `create-next-app` under `frontend/`: TypeScript, App Router, ESLint, Tailwind (per decision)
-- [ ] Verify `npm run dev` serves the default page
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(frontend): generate Next.js skeleton`; push
+- [x] Decide Tailwind yes/no (record in PLAN.md §2) — **Yes**, recorded in PLAN.md §2 (2026-05-27)
+- [x] Generate via `create-next-app` under `frontend/`: TypeScript, App Router, ESLint, Tailwind (per decision) — scaffold pulled **Next.js 16.2.6 + React 19 + Tailwind v4 + ESLint 9** (Next 16 has breaking changes vs older training data — see `frontend/AGENTS.md` and memory `project-nextjs-16-caveat`). Used `--src-dir` to match PLAN.md §5 layout; `--turbopack` (Next 16 default); `--use-npm`
+- [x] Verify `npm run dev` serves the default page — boots in 3.2s; `GET http://localhost:3000` returns 200 + 16.8KB HTML with title "Create Next App"
+- [x] Self code-review (medium) — no actionable findings; 2 npm-audit warnings are false-positives on transitive `postcss<8.5.10` inside Next's own `node_modules` ("fix" downgrades Next to 9.3.3 — unacceptable; build-time PostCSS XSS doesn't apply to standard Next builds; will clear when Next bumps its pinned postcss)
+- [x] Commit `chore(frontend): generate Next.js skeleton`; push — committed as `578f1dc`, pushed to `origin/code`
 
 ### 2.2 — Hishabi branding (metadata + favicon)
 - [ ] Root layout metadata: `title: "Hishabi"`, description "Calculators for Bangladeshi finance & life"
@@ -385,7 +385,8 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [ ] (no commit — infra setup)
 
 ### 6.4 — Backend env config + deploy
-- [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`
+- [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`, **`SPRING_PROFILES_ACTIVE=prod`**
+- [ ] Add a fail-fast `EnvironmentPostProcessor` (or `ApplicationContextInitializer`) that errors at startup if `spring.profiles.active` is missing or contains `dev` — closes the slice 1.2 footgun where a forgotten `SPRING_PROFILES_ACTIVE=prod` would silently fall back to dev profile + H2 in-memory DB in production
 - [ ] Deploy backend image; verify `/api/health` and Flyway/Liquibase migrations ran
 - [ ] (no commit — infra deploy; capture deploy notes in PLAN.md if useful)
 
