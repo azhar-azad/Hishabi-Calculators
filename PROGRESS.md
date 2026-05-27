@@ -120,9 +120,9 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `chore(frontend): Prettier + strict TS + tighter ESLint`; push — committed as `cecfb88`, pushed to `origin/code`
 
 ### 2.6 — API client helper
-- [ ] `lib/api.ts` with base URL from `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8080`); typed `get`/`post` helpers
-- [ ] Test: unit test mocking `fetch`
-- [ ] Self code-review (medium)
+- [x] `lib/api.ts` with base URL from `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8080`); typed `get`/`post` helpers — typed by user at `frontend/src/lib/api.ts`. Exports `apiGet<T>`, `apiPost<T, B>`, and `ApiError` (extends Error, carries `status` + parsed `body`). Private `request()` reads response as text first, then `JSON.parse` with text fallback — robust for both JSON and plain-text error responses. Throws `ApiError` on non-2xx. Two typos caught and fixed by user: `https://localhost:8080` → `http://localhost:8080` (dev backend has no TLS) and filename `api.text.ts` → `api.test.ts` (was being silently skipped by Vitest's `*.test.*` glob)
+- [x] Test: unit test mocking `fetch` — `frontend/__tests__/api.test.ts` covers 4 scenarios: GET success with parsed JSON, GET 404 with JSON error body, POST sends correct headers+body and returns parsed JSON, POST 500 with plain-text body. Uses `vi.stubGlobal('fetch', ...)` + `vi.unstubAllGlobals()` in `afterEach` — clean auto-restore
+- [x] Self code-review (medium) — three-angle inline; no actionable findings. `npm run check` 9/9 tests pass (1 smoke + 4 Home + 4 api); `npm run build` still prerenders `/` as static
 - [ ] Commit `feat(frontend): add API client helper`; push
 
 ### 2.7 — End-to-end /api/health probe
