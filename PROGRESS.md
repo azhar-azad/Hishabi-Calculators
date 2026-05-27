@@ -117,7 +117,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] ESLint config: warnings → errors when `CI=true` — implemented as **always strict** via `"lint": "eslint --max-warnings=0"` (tighter than spec — simpler, encourages zero-warning baseline everywhere; loosen later if friction). `eslint.config.mjs` now imports `eslint-config-prettier/flat` and places it AFTER `nextVitals` + `nextTs` in the flat-config array so it overrides any formatting rules they ship
 - [x] Run formatter + lint clean — `npm run format` rewrote 9 files (single quotes, 2-space, sorted Tailwind classes via `prettier-plugin-tailwindcss`; e.g. page.tsx Link className collapsed from 2 lines to 1 and re-ordered). New scripts: `format`, `format:check`, plus convenience `check` = `lint && format:check && test` (npm scripts use cmd.exe on Windows — `&&` works). `npm run check` green; `npm run build` still prerenders `/` as static
 - [x] Self code-review (medium) — three-angle inline: prettier ordering correct (last in array → wins formatting overrides), `--max-warnings=0` typo caught + fixed (`eslint max-warnings=0` → `eslint --max-warnings=0`), no behavioral diffs (5/5 tests still pass). Follow-up: CLAUDE.md "Quality gates" section still references `npm run lint && npm test` — should be `npm run check`. Doc-only cleanup for a later slice
-- [ ] Commit `chore(frontend): Prettier + strict TS + tighter ESLint`; push
+- [x] Commit `chore(frontend): Prettier + strict TS + tighter ESLint`; push — committed as `cecfb88`, pushed to `origin/code`
 
 ### 2.6 — API client helper
 - [ ] `lib/api.ts` with base URL from `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8080`); typed `get`/`post` helpers
