@@ -99,10 +99,10 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `feat(frontend): set Hishabi metadata`; push — committed as `e9b6573`, pushed to `origin/code`
 
 ### 2.3 — Test stack (Vitest + RTL)
-- [ ] Install Vitest, `@testing-library/react`, `@testing-library/jest-dom`, jsdom env
-- [ ] Wire `npm test` script + `vitest.config.ts`
-- [ ] Add a trivial smoke test (`smoke.test.ts`) that asserts `1 + 1 === 2` to prove the runner works
-- [ ] Self code-review (medium)
+- [x] Install Vitest, `@testing-library/react`, `@testing-library/jest-dom`, jsdom env — installed: `vitest@4.1.7`, `@vitejs/plugin-react@6.0.2`, `jsdom@29.1.1`, `@testing-library/react@16.3.2` (React 19 compatible), `@testing-library/dom@10.4.1`, `@testing-library/jest-dom@6.9.1`, `vite-tsconfig-paths@6.1.1`
+- [x] Wire `npm test` script + `vitest.config.ts` — typed by user in `frontend/package.json` (`"test": "vitest run"` — single-pass per CLAUDE.md pre-push rule) and `frontend/vitest.config.mts` (`.mts` per Next 16 docs, not `.ts`, since `package.json` has no `"type": "module"`). Config: `plugins: [tsconfigPaths(), react()]`, `environment: 'jsdom'`. Caught a typo on first try (`from "eslint/config"` instead of `"vitest/config"`) — user re-typed
+- [x] Add a trivial smoke test (`smoke.test.ts`) that asserts `1 + 1 === 2` to prove the runner works — typed by user at `frontend/__tests__/smoke.test.ts` (Next docs' "common `__tests__` convention"). `npm test` → 1/1 passed in 3.33s
+- [x] Self code-review (medium) — three-angle inline review: correct (test passes; lint clean; build green), secure (deps are mainstream Vitest/RTL ecosystem; no new audit findings), maintainable (4-space indent will normalize under Prettier in slice 2.5). Follow-up: drop `vite-tsconfig-paths` — Vite 7 has native `resolve.tsconfigPaths: true` support; the plugin prints a deprecation hint on every test run. Small cleanup for a later slice
 - [ ] Commit `chore(frontend): add Vitest + React Testing Library`; push
 
 ### 2.4 — Landing page placeholder
