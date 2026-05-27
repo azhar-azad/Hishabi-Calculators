@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost } from '@/lib/api';
 
 describe('api client', () => {
   let fetchMock: ReturnType<typeof vi.fn>;
@@ -82,11 +82,11 @@ describe('api client', () => {
         new Response('internal boom', { status: 500 }),
       );
 
-      const error = await apiPost('/api/things', {}).catch((e) => e);
-
-      expect(error).toBeInstanceOf(ApiError);
-      expect(error.status).toBe(500);
-      expect(error.body).toBe('internal boom');
+      await expect(apiPost('/api/things', {})).rejects.toMatchObject({
+        name: 'ApiError',
+        status: 500,
+        body: 'internal boom',
+      });
     });
   });
 });

@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "check": "npm run lint && npm run format:check && npm test"
+    "type-check": "tsc --noEmit",
+    "check": "npm run lint && npm run format:check && npm run type-check && npm test"
   },
   "dependencies": {
     "next": "16.2.6",
