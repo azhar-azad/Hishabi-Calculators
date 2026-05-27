@@ -141,7 +141,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Replace one element on landing (e.g. button) with library component to prove it renders — landing had no existing button, so **added** rather than replaced: a dev-only `<Link>` to `/dev/health` styled via `buttonVariants({ variant: 'link', size: 'sm' })` (canonical shadcn pattern for "Link styled as button"; cleaner than base-ui's `render` prop). Wrapped in `process.env.NODE_ENV === 'development'` so Next dead-code-eliminates it in prod. Also gives `/dev/health` a real discoverable entry point in dev (partially addresses slice 2.7 follow-up)
 - [x] Test: existing landing test still passes — Vitest runs with `NODE_ENV=test`, so the dev-only link doesn't render in tests. All 4 Home assertions unchanged + green; full 9/9 gate
 - [x] Self code-review (medium) — three-angle inline; `npm run check` 4/4 green; `npm run build` prerenders `/`, `/_not-found`, `/dev/health` all as `○ (Static)`. Tracked the base-ui render-prop vs Radix asChild distinction (shadcn 4.x switched primitive libraries)
-- [ ] Commit `chore(frontend): install <lib> + basic theme`; push
+- [x] Commit `chore(frontend): install <lib> + basic theme`; push — committed as `9fde85a`, pushed to `origin/code`
 
 ### 2.10 — CI: frontend workflow
 - [ ] Extend `.github/workflows/ci.yml` with frontend job: setup Node (LTS), `npm ci`, `npm run lint`, `npm test`, `npm run build`
