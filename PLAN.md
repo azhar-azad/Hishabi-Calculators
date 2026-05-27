@@ -37,6 +37,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | CI                       | GitHub Actions (tests + lint on PR to main) | 2026-05-26 |
 | Git workflow             | All work on `code` branch; PR → `main`    | 2026-05-26 |
 | Dev profile database     | H2 in-memory (PostgreSQL mode)            | 2026-05-26 |
+| Frontend styling         | Tailwind CSS                              | 2026-05-27 |
 
 Add a new row whenever a decision is made or changed.
 

@@ -86,10 +86,10 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 ## Phase 2 — Frontend scaffold (Next.js)
 
 ### 2.1 — Next.js project skeleton
-- [ ] Decide Tailwind yes/no (record in PLAN.md §2)
-- [ ] Generate via `create-next-app` under `frontend/`: TypeScript, App Router, ESLint, Tailwind (per decision)
-- [ ] Verify `npm run dev` serves the default page
-- [ ] Self code-review (medium)
+- [x] Decide Tailwind yes/no (record in PLAN.md §2) — **Yes**, recorded in PLAN.md §2 (2026-05-27)
+- [x] Generate via `create-next-app` under `frontend/`: TypeScript, App Router, ESLint, Tailwind (per decision) — scaffold pulled **Next.js 16.2.6 + React 19 + Tailwind v4 + ESLint 9** (Next 16 has breaking changes vs older training data — see `frontend/AGENTS.md` and memory `project-nextjs-16-caveat`). Used `--src-dir` to match PLAN.md §5 layout; `--turbopack` (Next 16 default); `--use-npm`
+- [x] Verify `npm run dev` serves the default page — boots in 3.2s; `GET http://localhost:3000` returns 200 + 16.8KB HTML with title "Create Next App"
+- [x] Self code-review (medium) — no actionable findings; 2 npm-audit warnings are false-positives on transitive `postcss<8.5.10` inside Next's own `node_modules` ("fix" downgrades Next to 9.3.3 — unacceptable; build-time PostCSS XSS doesn't apply to standard Next builds; will clear when Next bumps its pinned postcss)
 - [ ] Commit `chore(frontend): generate Next.js skeleton`; push
 
 ### 2.2 — Hishabi branding (metadata + favicon)
