@@ -1,4 +1,4 @@
-package dev.azhar.calculators.platform.config;
+package dev.azhar.hishabi.platform.config;
 
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;

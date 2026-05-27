@@ -24,7 +24,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | Deployment target        | Render / Railway / Fly.io (free tier)     | 2026-05-26 |
 | Mobile strategy          | Deferred; backend kept as clean REST API  | 2026-05-26 |
 | Tax-year scope (initial) | Schema multi-year, seed current year only | 2026-05-26 |
-| Java base package        | `dev.azhar.calculators`                   | 2026-05-26 |
+| Java base package        | `dev.azhar.hishabi`                       | 2026-05-27 |
 | Minimum tax floor        | Included from MVP (location-based)        | 2026-05-26 |
 | Wealth surcharge         | Deferred — out of MVP scope               | 2026-05-26 |
 | PF Net Interest Income   | Excluded from eligible investments        | 2026-05-26 |
@@ -72,7 +72,7 @@ Frontend is the only first-party client today. A mobile app is a future second c
 ## 4. Backend module layout (target)
 
 ```
-backend/src/main/java/dev/azhar/calculators/
+backend/src/main/java/dev/azhar/hishabi/
   platform/        cross-cutting: auth, users, history, config, errors
   calculators/
     tax/           Bangladeshi income tax calculator

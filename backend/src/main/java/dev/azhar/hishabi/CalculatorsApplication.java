@@ -1,4 +1,4 @@
-package dev.azhar.calculators;
+package dev.azhar.hishabi;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

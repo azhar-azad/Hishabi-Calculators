@@ -13,7 +13,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 ## Phase 0 — Repo bootstrap
 
 - [-] Initialize git repo — handled by user (creates remote, runs `git init`, creates `code` branch)
-- [x] Decide on package/product name — Java package `dev.azhar.calculators`; product name **Hishabi** (PLAN.md §2)
+- [x] Decide on package/product name — Java package `dev.azhar.hishabi` (originally `dev.azhar.calculators`; renamed in pre-Phase-3 refactor to avoid the `calculators.calculators` redundancy once `calculators/` became a subdomain); product name **Hishabi** (PLAN.md §2)
 - [x] Add `.gitignore` covering Java, Node, IDE files (`.idea/`, `.vscode/`), env files (`.env*`), build outputs (`target/`, `node_modules/`, `.next/`)
 - [x] Create `backend/` and `frontend/` empty directories (with `.gitkeep` until scaffolded)
 - [x] First commit on `code` branch: `chore: bootstrap monorepo (Phase 0)` — includes .gitignore + empty dirs; push to `code` — committed as `bdaae0d "project plan documented"` and pushed to `origin/code`
@@ -23,7 +23,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 ## Phase 1 — Backend scaffold (Spring Boot)
 
 ### 1.1 — Spring Boot project skeleton
-- [x] Generate via Spring Initializr under `backend/`: Java 21, Maven, base package `dev.azhar.calculators`; dependencies: Web, Validation, Spring Data JPA, PostgreSQL Driver, Spring Security, Lombok — Initializr returned **Spring Boot 4.0.6** (latest GA); starter names follow Boot 4 convention (`spring-boot-starter-webmvc`, split-out `*-test` starters)
+- [x] Generate via Spring Initializr under `backend/`: Java 21, Maven, base package `dev.azhar.hishabi`; dependencies: Web, Validation, Spring Data JPA, PostgreSQL Driver, Spring Security, Lombok — Initializr returned **Spring Boot 4.0.6** (latest GA); starter names follow Boot 4 convention (`spring-boot-starter-webmvc`, split-out `*-test` starters)
 - [x] Verify boots cleanly — full context load proven by passing `@SpringBootTest` below; Tomcat port-bind verification deferred to slice 1.3 (`/api/health`)
 - [x] Test: `CalculatorsApplicationTests` (Spring context loads); `./mvnw test` green — H2 added as test-scope dep so JPA context can initialize without a configured DataSource (real DB config arrives in slice 1.2)
 - [x] Self code-review (medium) — inline three-angle review, no findings of consequence (diff is ~25KB of unchanged Initializr boilerplate around a 5-line H2 dep addition)
@@ -156,7 +156,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no DB inside), data-driven rules._
 
 ### 3.1 — Tax package + domain enums
-- [ ] Create package `dev.azhar.calculators.calculators.tax`
+- [ ] Create package `dev.azhar.hishabi.calculators.tax`
 - [ ] Enums: `TaxpayerCategory` (GENERAL, WOMAN, SENIOR_65_PLUS, PHYSICALLY_MENTALLY_DISABLED, GAZETTED_FREEDOM_FIGHTER, THIRD_GENDER), `Location` (DHAKA_CHITTAGONG_CITY_CORP, OTHER_CITY_CORP, OTHER)
 - [ ] Test: JSON serialization roundtrip via Jackson
 - [ ] Self code-review (medium)
