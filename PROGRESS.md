@@ -93,60 +93,61 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `chore(frontend): generate Next.js skeleton`; push — committed as `578f1dc`, pushed to `origin/code`
 
 ### 2.2 — Hishabi branding (metadata + favicon)
-- [ ] Root layout metadata: `title: "Hishabi"`, description "Calculators for Bangladeshi finance & life"
-- [ ] Favicon placeholder
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend): set Hishabi metadata`; push
+- [x] Root layout metadata: `title: "Hishabi"`, description "Calculators for Bangladeshi finance & life" — typed by user in `frontend/src/app/layout.tsx` lines 15-18
+- [x] Favicon placeholder — keeping scaffold's default `frontend/src/app/favicon.ico` (Next's logo) as the placeholder; replace when real Hishabi branding lands
+- [x] Self code-review (medium) — two-string-literal change; `npm run lint` clean; `npm run build` green (TypeScript OK, `/` prerendered as static)
+- [x] Commit `feat(frontend): set Hishabi metadata`; push — committed as `e9b6573`, pushed to `origin/code`
 
 ### 2.3 — Test stack (Vitest + RTL)
-- [ ] Install Vitest, `@testing-library/react`, `@testing-library/jest-dom`, jsdom env
-- [ ] Wire `npm test` script + `vitest.config.ts`
-- [ ] Add a trivial smoke test (`smoke.test.ts`) that asserts `1 + 1 === 2` to prove the runner works
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(frontend): add Vitest + React Testing Library`; push
+- [x] Install Vitest, `@testing-library/react`, `@testing-library/jest-dom`, jsdom env — installed: `vitest@4.1.7`, `@vitejs/plugin-react@6.0.2`, `jsdom@29.1.1`, `@testing-library/react@16.3.2` (React 19 compatible), `@testing-library/dom@10.4.1`, `@testing-library/jest-dom@6.9.1`, `vite-tsconfig-paths@6.1.1`
+- [x] Wire `npm test` script + `vitest.config.ts` — typed by user in `frontend/package.json` (`"test": "vitest run"` — single-pass per CLAUDE.md pre-push rule) and `frontend/vitest.config.mts` (`.mts` per Next 16 docs, not `.ts`, since `package.json` has no `"type": "module"`). Config: `plugins: [tsconfigPaths(), react()]`, `environment: 'jsdom'`. Caught a typo on first try (`from "eslint/config"` instead of `"vitest/config"`) — user re-typed
+- [x] Add a trivial smoke test (`smoke.test.ts`) that asserts `1 + 1 === 2` to prove the runner works — typed by user at `frontend/__tests__/smoke.test.ts` (Next docs' "common `__tests__` convention"). `npm test` → 1/1 passed in 3.33s
+- [x] Self code-review (medium) — three-angle inline review: correct (test passes; lint clean; build green), secure (deps are mainstream Vitest/RTL ecosystem; no new audit findings), maintainable (4-space indent will normalize under Prettier in slice 2.5). Follow-up: drop `vite-tsconfig-paths` — Vite 7 has native `resolve.tsconfigPaths: true` support; the plugin prints a deprecation hint on every test run. Small cleanup for a later slice
+- [x] Commit `chore(frontend): add Vitest + React Testing Library`; push — committed as `eea8056`, pushed to `origin/code`
 
 ### 2.4 — Landing page placeholder
-- [ ] Replace default `app/page.tsx` with simple landing: header "Hishabi", short tagline, list of future calculators (Income Tax, Zakat coming soon)
-- [ ] Test: `Home.test.tsx` (renders "Hishabi" header and "Income Tax" link)
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend): landing page placeholder`; push
+- [x] Replace default `app/page.tsx` with simple landing: header "Hishabi", short tagline, list of future calculators (Income Tax, Zakat coming soon) — typed by user in `frontend/src/app/page.tsx`. Income Tax card is a `<Link href="/calculators/tax">` (route arrives in slice 4.1; until then it 404s — intentional). Zakat shown as opacity-60 disabled card with "Coming soon"
+- [x] Test: `Home.test.tsx` (renders "Hishabi" header and "Income Tax" link) — typed by user at `frontend/__tests__/Home.test.tsx`; expanded to 4 tests covering h1, tagline, Income Tax link href, and Zakat coming-soon text. **First run failed** with "Found multiple elements" — RTL needs explicit cleanup between tests in Vitest. Patched with `frontend/vitest.setup.ts` (calls `cleanup()` in `afterEach`) + added `setupFiles` to `vitest.config.mts`. Slice 2.3 oversight that this slice fixes
+- [x] Self code-review (medium) — three-angle inline; all 5 tests pass (1 smoke + 4 Home), lint clean, build green (/ still prerendered static). Code-review surfaced two typos in typed page.tsx (`fond-medium` → `font-medium`, `Bangladesh` → `Bangladeshi`) — fixed by user
+- [x] Commit `feat(frontend): landing page placeholder`; push — committed as `45aeb69`, pushed to `origin/code`
 
 ### 2.5 — Prettier + strict TypeScript
-- [ ] Add Prettier with sensible defaults + `.prettierrc`
-- [ ] `tsconfig.json` `strict: true`
-- [ ] ESLint config: warnings → errors when `CI=true`
-- [ ] Run formatter + lint clean
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(frontend): Prettier + strict TS + tighter ESLint`; push
+- [x] Add Prettier with sensible defaults + `.prettierrc` — installed `prettier@3.8.3`, `eslint-config-prettier@10.1.8`, `prettier-plugin-tailwindcss@0.8.0`. Typed by user: `frontend/.prettierrc` (minimal — only `singleQuote: true` + tailwind plugin; rest inherit Prettier 3 defaults: 2-space, semi, trailing-commas-all, 80-char) and `frontend/.prettierignore` (only `package-lock.json`; `.gitignore` already covers `node_modules`/`.next` and Prettier reads it natively)
+- [x] `tsconfig.json` `strict: true` — already on from `create-next-app` scaffold (line 7); no edit needed. Recorded here for traceability
+- [x] ESLint config: warnings → errors when `CI=true` — implemented as **always strict** via `"lint": "eslint --max-warnings=0"` (tighter than spec — simpler, encourages zero-warning baseline everywhere; loosen later if friction). `eslint.config.mjs` now imports `eslint-config-prettier/flat` and places it AFTER `nextVitals` + `nextTs` in the flat-config array so it overrides any formatting rules they ship
+- [x] Run formatter + lint clean — `npm run format` rewrote 9 files (single quotes, 2-space, sorted Tailwind classes via `prettier-plugin-tailwindcss`; e.g. page.tsx Link className collapsed from 2 lines to 1 and re-ordered). New scripts: `format`, `format:check`, plus convenience `check` = `lint && format:check && test` (npm scripts use cmd.exe on Windows — `&&` works). `npm run check` green; `npm run build` still prerenders `/` as static
+- [x] Self code-review (medium) — three-angle inline: prettier ordering correct (last in array → wins formatting overrides), `--max-warnings=0` typo caught + fixed (`eslint max-warnings=0` → `eslint --max-warnings=0`), no behavioral diffs (5/5 tests still pass). Follow-up: CLAUDE.md "Quality gates" section still references `npm run lint && npm test` — should be `npm run check`. Doc-only cleanup for a later slice
+- [x] Commit `chore(frontend): Prettier + strict TS + tighter ESLint`; push — committed as `cecfb88`, pushed to `origin/code`
 
 ### 2.6 — API client helper
-- [ ] `lib/api.ts` with base URL from `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8080`); typed `get`/`post` helpers
-- [ ] Test: unit test mocking `fetch`
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend): add API client helper`; push
+- [x] `lib/api.ts` with base URL from `NEXT_PUBLIC_API_URL` (defaults to `http://localhost:8080`); typed `get`/`post` helpers — typed by user at `frontend/src/lib/api.ts`. Exports `apiGet<T>`, `apiPost<T, B>`, and `ApiError` (extends Error, carries `status` + parsed `body`). Private `request()` reads response as text first, then `JSON.parse` with text fallback — robust for both JSON and plain-text error responses. Throws `ApiError` on non-2xx. Two typos caught and fixed by user: `https://localhost:8080` → `http://localhost:8080` (dev backend has no TLS) and filename `api.text.ts` → `api.test.ts` (was being silently skipped by Vitest's `*.test.*` glob)
+- [x] Test: unit test mocking `fetch` — `frontend/__tests__/api.test.ts` covers 4 scenarios: GET success with parsed JSON, GET 404 with JSON error body, POST sends correct headers+body and returns parsed JSON, POST 500 with plain-text body. Uses `vi.stubGlobal('fetch', ...)` + `vi.unstubAllGlobals()` in `afterEach` — clean auto-restore
+- [x] Self code-review (medium) — three-angle inline; no actionable findings. `npm run check` 9/9 tests pass (1 smoke + 4 Home + 4 api); `npm run build` still prerenders `/` as static
+- [x] Commit `feat(frontend): add API client helper`; push — committed as `78e79f6`, pushed to `origin/code`
+- [x] **Post-commit fix:** validation step 2 (TypeScript catches misuse) exposed that `npm run build` only type-checks files reachable from the Next page graph — so `__tests__/` is silently skipped. Two type errors in the typed apiPost-error test (`error.status` / `error.body` on `unknown`) were hiding. **Fix:** added `"type-check": "tsc --noEmit"` to `package.json` scripts and wired it into the `check` chain (`lint && format:check && type-check && test`); rewrote the apiPost-error test using `rejects.toMatchObject({ name: 'ApiError', status, body })` for consistency with the apiGet-error test and to avoid the `unknown`-narrowing problem; removed now-unused `ApiError` import. All 4 gate stages green. Closes a slice-2.5 design gap (the `check` gate wasn't actually verifying TS correctness everywhere) — committed separately as a `fix(frontend)` follow-up
 
 ### 2.7 — End-to-end /api/health probe
-- [ ] Dev-only page (e.g. `app/_dev/health/page.tsx`) calling backend `/api/health` and rendering result
-- [ ] Manual verify: start both servers, page shows backend status
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(frontend): wire /api/health probe page`; push
+- [x] Dev-only page (e.g. `app/_dev/health/page.tsx`) calling backend `/api/health` and rendering result — **path corrected** to `frontend/src/app/dev/health/page.tsx` (URL `/dev/health`); the original `_dev` would have been a Next App Router "private folder" (opts out of routing entirely → page unreachable). Client component with discriminated-union `ProbeState` (loading | ok | error), uses `apiGet<HealthResponse>` from slice 2.6, distinguishes `ApiError` (HTTP error from a reachable backend) vs other errors (network/CORS/fetch failure). Re-probe button + `aria-live="polite"` region. Bumped against a Next 16/React 19 lint rule `react-hooks/set-state-in-effect` — disabled inline with comment explaining the rule's static analysis can't see that our setState calls happen *after* an async resolve (no render cascade). Considered server-component alternative but rejected: server-to-server doesn't exercise CORS, which is half the point of this probe
+- [x] Manual verify: start both servers, page shows backend status — validation steps documented in commit body / chat
+- [x] Self code-review (medium) — three-angle inline; `npm run check` green (lint clean with documented disable, format clean, type-check clean, 9/9 tests pass), `npm run build` green (`/dev/health` listed as `○ (Static)` — loading HTML shell prerenders, fetch runs client-side after hydration). Follow-up: no prod-safety guard yet — if this page ships to prod, anyone can visit it. Add `NODE_ENV !== 'production'` check or remove the page before prod deploy
+- [x] Commit `chore(frontend): wire /api/health probe page`; push — committed as `43e9a2a`, pushed to `origin/code`
 
 ### 2.8 — UI component library decision *(decision — no commit)*
-- [ ] Decide: shadcn/ui vs MUI vs hand-rolled (discuss with user)
-- [ ] Record decision in PLAN.md §2
+- [x] Decide: shadcn/ui vs MUI vs hand-rolled (discuss with user) — **shadcn/ui** chosen. Reasons: Tailwind-native (we locked Tailwind in 2.1; MUI would fight it); components live in our repo so they double as a React patterns reference while learning Next; pairs with `react-hook-form` for the tax form coming in slice 4.x; Radix primitives give keyboard nav + screen reader support for free
+- [x] Record decision in PLAN.md §2 — added row `Frontend UI library | shadcn/ui (Radix + Tailwind) | 2026-05-27`
 
 ### 2.9 — UI library install + theme
-- [ ] Install + bootstrap chosen library
-- [ ] Replace one element on landing (e.g. button) with library component to prove it renders
-- [ ] Test: existing landing test still passes
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(frontend): install <lib> + basic theme`; push
+- [x] Install + bootstrap chosen library — ran `npx shadcn@latest init --defaults --yes` (next template + `base-nova` preset + neutral base color + CSS variables). Generated `frontend/components.json`, `src/components/ui/button.tsx`, `src/lib/utils.ts` (the `cn()` helper combining `clsx` + `tailwind-merge`); patched `src/app/globals.css` with theme CSS variables (background, foreground, primary, destructive, sidebar, chart palette). New runtime deps: `@base-ui/react@^1.5` (the Radix-team successor that shadcn 4.x is built on), `class-variance-authority`, `clsx`, `lucide-react`, `tailwind-merge`, `tw-animate-css`. `shadcn` CLI is also in runtime deps (slightly odd, but it's a CLI not imported into client bundles)
+- [x] Replace one element on landing (e.g. button) with library component to prove it renders — landing had no existing button, so **added** rather than replaced: a dev-only `<Link>` to `/dev/health` styled via `buttonVariants({ variant: 'link', size: 'sm' })` (canonical shadcn pattern for "Link styled as button"; cleaner than base-ui's `render` prop). Wrapped in `process.env.NODE_ENV === 'development'` so Next dead-code-eliminates it in prod. Also gives `/dev/health` a real discoverable entry point in dev (partially addresses slice 2.7 follow-up)
+- [x] Test: existing landing test still passes — Vitest runs with `NODE_ENV=test`, so the dev-only link doesn't render in tests. All 4 Home assertions unchanged + green; full 9/9 gate
+- [x] Self code-review (medium) — three-angle inline; `npm run check` 4/4 green; `npm run build` prerenders `/`, `/_not-found`, `/dev/health` all as `○ (Static)`. Tracked the base-ui render-prop vs Radix asChild distinction (shadcn 4.x switched primitive libraries)
+- [x] Commit `chore(frontend): install <lib> + basic theme`; push — committed as `9fde85a`, pushed to `origin/code`
 
 ### 2.10 — CI: frontend workflow
-- [ ] Extend `.github/workflows/ci.yml` with frontend job: setup Node (LTS), `npm ci`, `npm run lint`, `npm test`, `npm run build`
-- [ ] Verify green on GitHub
-- [ ] Self code-review (medium)
-- [ ] Commit `ci: frontend lint + test + build workflow`; push
+- [x] Extend `.github/workflows/ci.yml` with frontend job: setup Node (LTS), `npm ci`, `npm run lint`, `npm test`, `npm run build` — added `frontend` job parallel to `backend`. Node 22 LTS, `npm ci` (lockfile-strict), `working-directory: frontend` at job level, `NEXT_TELEMETRY_DISABLED=1`, cache keyed on `frontend/package-lock.json`. **Used `npm run check` instead of separate `lint`/`test` steps** — it's our composite gate (lint + format:check + type-check + test) from the slice-2.6 fix, a strict superset of the original spec; cleaner failure attribution. Separate `npm run build` step preserved
+- [x] Verify green on GitHub — run id 26520864170 on commit `f5012b4`: both jobs success (Backend Maven verify + Frontend check + build)
+- [x] Self code-review (medium) — three-angle inline; jobs run in parallel (no inter-dependence); cache invalidates cleanly on dep changes; no secrets needed for frontend job
+- [x] Commit `ci: frontend lint + test + build workflow`; push — committed as `f5012b4`, pushed to `origin/code`; CI run 26520864170 green
 
 ---
 
