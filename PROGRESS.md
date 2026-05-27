@@ -106,9 +106,9 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `chore(frontend): add Vitest + React Testing Library`; push — committed as `eea8056`, pushed to `origin/code`
 
 ### 2.4 — Landing page placeholder
-- [ ] Replace default `app/page.tsx` with simple landing: header "Hishabi", short tagline, list of future calculators (Income Tax, Zakat coming soon)
-- [ ] Test: `Home.test.tsx` (renders "Hishabi" header and "Income Tax" link)
-- [ ] Self code-review (medium)
+- [x] Replace default `app/page.tsx` with simple landing: header "Hishabi", short tagline, list of future calculators (Income Tax, Zakat coming soon) — typed by user in `frontend/src/app/page.tsx`. Income Tax card is a `<Link href="/calculators/tax">` (route arrives in slice 4.1; until then it 404s — intentional). Zakat shown as opacity-60 disabled card with "Coming soon"
+- [x] Test: `Home.test.tsx` (renders "Hishabi" header and "Income Tax" link) — typed by user at `frontend/__tests__/Home.test.tsx`; expanded to 4 tests covering h1, tagline, Income Tax link href, and Zakat coming-soon text. **First run failed** with "Found multiple elements" — RTL needs explicit cleanup between tests in Vitest. Patched with `frontend/vitest.setup.ts` (calls `cleanup()` in `afterEach`) + added `setupFiles` to `vitest.config.mts`. Slice 2.3 oversight that this slice fixes
+- [x] Self code-review (medium) — three-angle inline; all 5 tests pass (1 smoke + 4 Home), lint clean, build green (/ still prerendered static). Code-review surfaced two typos in typed page.tsx (`fond-medium` → `font-medium`, `Bangladesh` → `Bangladeshi`) — fixed by user
 - [ ] Commit `feat(frontend): landing page placeholder`; push
 
 ### 2.5 — Prettier + strict TypeScript
