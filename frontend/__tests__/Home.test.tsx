@@ -5,7 +5,7 @@ import Home from '@/app/page';
 describe('Home (landing page)', () => {
   it('renders the Hishabi h1 header', () => {
     render(<Home />);
-    const heading = screen.getByRole('heading', { name: 'Hishabi', level: 1 });
+    const heading = screen.getByRole('heading', { name: 'NonexistentHeader', level: 1 });
     expect(heading).toBeDefined();
   });
 
