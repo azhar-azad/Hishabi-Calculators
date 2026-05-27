@@ -133,8 +133,8 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `chore(frontend): wire /api/health probe page`; push — committed as `43e9a2a`, pushed to `origin/code`
 
 ### 2.8 — UI component library decision *(decision — no commit)*
-- [ ] Decide: shadcn/ui vs MUI vs hand-rolled (discuss with user)
-- [ ] Record decision in PLAN.md §2
+- [x] Decide: shadcn/ui vs MUI vs hand-rolled (discuss with user) — **shadcn/ui** chosen. Reasons: Tailwind-native (we locked Tailwind in 2.1; MUI would fight it); components live in our repo so they double as a React patterns reference while learning Next; pairs with `react-hook-form` for the tax form coming in slice 4.x; Radix primitives give keyboard nav + screen reader support for free
+- [x] Record decision in PLAN.md §2 — added row `Frontend UI library | shadcn/ui (Radix + Tailwind) | 2026-05-27`
 
 ### 2.9 — UI library install + theme
 - [ ] Install + bootstrap chosen library
