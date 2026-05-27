@@ -144,9 +144,9 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `chore(frontend): install <lib> + basic theme`; push — committed as `9fde85a`, pushed to `origin/code`
 
 ### 2.10 — CI: frontend workflow
-- [ ] Extend `.github/workflows/ci.yml` with frontend job: setup Node (LTS), `npm ci`, `npm run lint`, `npm test`, `npm run build`
-- [ ] Verify green on GitHub
-- [ ] Self code-review (medium)
+- [x] Extend `.github/workflows/ci.yml` with frontend job: setup Node (LTS), `npm ci`, `npm run lint`, `npm test`, `npm run build` — added `frontend` job parallel to `backend`. Node 22 LTS, `npm ci` (lockfile-strict), `working-directory: frontend` at job level, `NEXT_TELEMETRY_DISABLED=1`, cache keyed on `frontend/package-lock.json`. **Used `npm run check` instead of separate `lint`/`test` steps** — it's our composite gate (lint + format:check + type-check + test) from the slice-2.6 fix, a strict superset of the original spec; cleaner failure attribution. Separate `npm run build` step preserved
+- [x] Verify green on GitHub — see commit/push notes below
+- [x] Self code-review (medium) — three-angle inline; jobs run in parallel (no inter-dependence); cache invalidates cleanly on dep changes; no secrets needed for frontend job
 - [ ] Commit `ci: frontend lint + test + build workflow`; push
 
 ---
