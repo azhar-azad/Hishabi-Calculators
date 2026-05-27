@@ -103,7 +103,7 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Wire `npm test` script + `vitest.config.ts` — typed by user in `frontend/package.json` (`"test": "vitest run"` — single-pass per CLAUDE.md pre-push rule) and `frontend/vitest.config.mts` (`.mts` per Next 16 docs, not `.ts`, since `package.json` has no `"type": "module"`). Config: `plugins: [tsconfigPaths(), react()]`, `environment: 'jsdom'`. Caught a typo on first try (`from "eslint/config"` instead of `"vitest/config"`) — user re-typed
 - [x] Add a trivial smoke test (`smoke.test.ts`) that asserts `1 + 1 === 2` to prove the runner works — typed by user at `frontend/__tests__/smoke.test.ts` (Next docs' "common `__tests__` convention"). `npm test` → 1/1 passed in 3.33s
 - [x] Self code-review (medium) — three-angle inline review: correct (test passes; lint clean; build green), secure (deps are mainstream Vitest/RTL ecosystem; no new audit findings), maintainable (4-space indent will normalize under Prettier in slice 2.5). Follow-up: drop `vite-tsconfig-paths` — Vite 7 has native `resolve.tsconfigPaths: true` support; the plugin prints a deprecation hint on every test run. Small cleanup for a later slice
-- [ ] Commit `chore(frontend): add Vitest + React Testing Library`; push
+- [x] Commit `chore(frontend): add Vitest + React Testing Library`; push — committed as `eea8056`, pushed to `origin/code`
 
 ### 2.4 — Landing page placeholder
 - [ ] Replace default `app/page.tsx` with simple landing: header "Hishabi", short tagline, list of future calculators (Income Tax, Zakat coming soon)
