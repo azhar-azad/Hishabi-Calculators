@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { buttonVariants } from '@/components/ui/button';
 
 export default function Home() {
   return (
@@ -32,6 +33,14 @@ export default function Home() {
           </li>
         </ul>
       </section>
+      {process.env.NODE_ENV === 'development' && (
+        <Link
+          href="/dev/health"
+          className={buttonVariants({ variant: 'link', size: 'sm' })}
+        >
+          Backend health probe →
+        </Link>
+      )}
     </main>
   );
 }

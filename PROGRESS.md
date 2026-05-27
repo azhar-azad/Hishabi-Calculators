@@ -137,10 +137,10 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Record decision in PLAN.md §2 — added row `Frontend UI library | shadcn/ui (Radix + Tailwind) | 2026-05-27`
 
 ### 2.9 — UI library install + theme
-- [ ] Install + bootstrap chosen library
-- [ ] Replace one element on landing (e.g. button) with library component to prove it renders
-- [ ] Test: existing landing test still passes
-- [ ] Self code-review (medium)
+- [x] Install + bootstrap chosen library — ran `npx shadcn@latest init --defaults --yes` (next template + `base-nova` preset + neutral base color + CSS variables). Generated `frontend/components.json`, `src/components/ui/button.tsx`, `src/lib/utils.ts` (the `cn()` helper combining `clsx` + `tailwind-merge`); patched `src/app/globals.css` with theme CSS variables (background, foreground, primary, destructive, sidebar, chart palette). New runtime deps: `@base-ui/react@^1.5` (the Radix-team successor that shadcn 4.x is built on), `class-variance-authority`, `clsx`, `lucide-react`, `tailwind-merge`, `tw-animate-css`. `shadcn` CLI is also in runtime deps (slightly odd, but it's a CLI not imported into client bundles)
+- [x] Replace one element on landing (e.g. button) with library component to prove it renders — landing had no existing button, so **added** rather than replaced: a dev-only `<Link>` to `/dev/health` styled via `buttonVariants({ variant: 'link', size: 'sm' })` (canonical shadcn pattern for "Link styled as button"; cleaner than base-ui's `render` prop). Wrapped in `process.env.NODE_ENV === 'development'` so Next dead-code-eliminates it in prod. Also gives `/dev/health` a real discoverable entry point in dev (partially addresses slice 2.7 follow-up)
+- [x] Test: existing landing test still passes — Vitest runs with `NODE_ENV=test`, so the dev-only link doesn't render in tests. All 4 Home assertions unchanged + green; full 9/9 gate
+- [x] Self code-review (medium) — three-angle inline; `npm run check` 4/4 green; `npm run build` prerenders `/`, `/_not-found`, `/dev/health` all as `○ (Static)`. Tracked the base-ui render-prop vs Radix asChild distinction (shadcn 4.x switched primitive libraries)
 - [ ] Commit `chore(frontend): install <lib> + basic theme`; push
 
 ### 2.10 — CI: frontend workflow
