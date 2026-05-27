@@ -93,9 +93,9 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 - [x] Commit `chore(frontend): generate Next.js skeleton`; push — committed as `578f1dc`, pushed to `origin/code`
 
 ### 2.2 — Hishabi branding (metadata + favicon)
-- [ ] Root layout metadata: `title: "Hishabi"`, description "Calculators for Bangladeshi finance & life"
-- [ ] Favicon placeholder
-- [ ] Self code-review (medium)
+- [x] Root layout metadata: `title: "Hishabi"`, description "Calculators for Bangladeshi finance & life" — typed by user in `frontend/src/app/layout.tsx` lines 15-18
+- [x] Favicon placeholder — keeping scaffold's default `frontend/src/app/favicon.ico` (Next's logo) as the placeholder; replace when real Hishabi branding lands
+- [x] Self code-review (medium) — two-string-literal change; `npm run lint` clean; `npm run build` green (TypeScript OK, `/` prerendered as static)
 - [ ] Commit `feat(frontend): set Hishabi metadata`; push
 
 ### 2.3 — Test stack (Vitest + RTL)
