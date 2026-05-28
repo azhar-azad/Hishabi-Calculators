@@ -1,4 +1,4 @@
-package dev.azhar.calculators.profile;
+package dev.azhar.hishabi.profile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

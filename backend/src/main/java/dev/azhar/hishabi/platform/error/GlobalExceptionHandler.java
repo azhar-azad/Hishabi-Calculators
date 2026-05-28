@@ -1,4 +1,4 @@
-package dev.azhar.calculators.platform.error;
+package dev.azhar.hishabi.platform.error;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;

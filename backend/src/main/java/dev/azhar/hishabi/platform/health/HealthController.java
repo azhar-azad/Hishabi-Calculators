@@ -1,4 +1,4 @@
-package dev.azhar.calculators.platform.health;
+package dev.azhar.hishabi.platform.health;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

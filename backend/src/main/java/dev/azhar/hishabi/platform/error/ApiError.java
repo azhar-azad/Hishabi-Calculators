@@ -1,4 +1,4 @@
-package dev.azhar.calculators.platform.error;
+package dev.azhar.hishabi.platform.error;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
