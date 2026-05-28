@@ -156,10 +156,10 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no DB inside), data-driven rules._
 
 ### 3.1 — Tax package + domain enums
-- [ ] Create package `dev.azhar.hishabi.calculators.tax`
-- [ ] Enums: `TaxpayerCategory` (GENERAL, WOMAN, SENIOR_65_PLUS, PHYSICALLY_MENTALLY_DISABLED, GAZETTED_FREEDOM_FIGHTER, THIRD_GENDER), `Location` (DHAKA_CHITTAGONG_CITY_CORP, OTHER_CITY_CORP, OTHER)
-- [ ] Test: JSON serialization roundtrip via Jackson
-- [ ] Self code-review (medium)
+- [x] Create package `dev.azhar.hishabi.calculators.tax` — created `tax/model/` sub-package per PLAN.md §4 (enums are domain primitives alongside future entities + DTOs)
+- [x] Enums: `TaxpayerCategory` (GENERAL, WOMAN, SENIOR_65_PLUS, PHYSICALLY_MENTALLY_DISABLED, GAZETTED_FREEDOM_FIGHTER, THIRD_GENDER), `Location` (DHAKA_CHITTAGONG_CITY_CORP, OTHER_CITY_CORP, OTHER) — typed by user in `TaxpayerCategory.java` + `Location.java`. Both with Javadoc grounding to PLAN.md §10.3 / §10.6. Caught a typo on first try (`GAZETTED_FREDOM_FIGHTER` missing the second E — Jackson's error message surfaced it, since the test serialized all enum values and the typo printed in the "accepted values" list)
+- [x] Test: JSON serialization roundtrip via Jackson — `TaxEnumsJsonTest.java` covers (1) explicit uppercase serialization format, (2) full roundtrip across all enum values for both enums, (3) unknown value fails to deserialise with `InvalidFormatException`. **Discovered Spring Boot 4 ships Jackson 3 at `tools.jackson.*`** (not `com.fasterxml.jackson.*`) — first proposed test used Jackson 2 imports; fix used `tools.jackson.databind.ObjectMapper`, `new JsonMapper()`, `tools.jackson.databind.exc.InvalidFormatException`. Saved as memory `project-jackson-3-caveat` since this will recur in every future JSON-handling slice (DTOs, controllers, custom serializers)
+- [x] Self code-review (medium) — three-angle inline; 15/15 unit tests green (10 prior + 4 new + 1 Application boot test that turned up after the d1e99f0 rename — wait that's 15 including the duplicate. Verified: `./mvnw '-Dtest=!PostgresContainerSmokeTest' test` runs 15/15 clean; Spotless clean
 - [ ] Commit `feat(tax): add tax package + domain enums`; push
 
 ### 3.2 — Rule entities
