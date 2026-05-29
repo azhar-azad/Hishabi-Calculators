@@ -170,11 +170,11 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(tax): add rule entities`; push — committed as `68a1e92`, pushed to `origin/code`
 
 ### 3.3 — Migration tool *(decision + wire-up)*
-- [ ] Decide Flyway vs Liquibase (record in PLAN.md §2)
-- [ ] Add dependency + config; V1 migration creates tax rule tables (no seed yet)
-- [ ] Test: migration runs cleanly against Testcontainers
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(backend): wire <tool> migrations + V1 tax schema`; push
+- [x] Decide Flyway vs Liquibase (record in PLAN.md §2) — **Flyway** (plain-SQL, forward-only). Recorded in PLAN.md §2. Rationale: PLAN §10 treats tax rules as *data* — seeds (3.4) read far cleaner as raw `INSERT` SQL than Liquibase changesets; solo dev already knows SQL; no cross-DB abstraction needed (Postgres is the only real target; H2 is just fast-boot). Forward-only is fine — CLAUDE.md already forbids rewriting applied migrations
+- [x] Add dependency + config; V1 migration creates tax rule tables (no seed yet) — `V1__create_tax_rule_tables.sql` creates all 5 `tax_*` tables with named FK/unique constraints, column types mirroring the entities so `ddl-auto: validate` passes. **Three deps needed** (Boot 4 split autoconfig into per-tech modules): `flyway-core` + `flyway-database-postgresql` (the library, for PG16) **and `org.springframework.boot:spring-boot-flyway`** (the autoconfig module). The last one was initially missed — without it Flyway silently never runs, which would have **broken prod boot** (prod uses `validate` against an empty schema). Config: Flyway OFF by default in `application.yml` (H2 dev/tests can't run PG SQL), ON in `application-prod.yml`, force-OFF in `ProdProfileBootTest` (overrides prod→H2)
+- [x] Test: migration runs cleanly against Testcontainers — switched `TaxRuleEntitiesPersistenceTest` from `ddl-auto: create-drop` to **Flyway + `validate`** (added `@ImportAutoConfiguration(FlywayAutoConfiguration.class)` — Boot 4's `@DataJpaTest` slice imports only the 2 JPA autoconfigs, not Flyway). Logs confirm `Successfully applied 1 migration ... now at version v1`, then `validate` passes → **proves V1 SQL ⟷ entity mappings agree** (closes the 3.2 drift seam). 17/17 backend tests green under `./mvnw verify`
+- [x] Self code-review (medium) — three-angle inline. No blocking findings. Caught the missing `spring-boot-flyway` prod-boot bug. Documented seam: dev/H2 schema via Hibernate `create-drop` vs prod/Postgres via Flyway — both checked against the same entities (validate test is the guard), so transitively consistent. V1 now immutable; seeds → V2 (3.4)
+- [ ] Commit `feat(backend): wire Flyway migrations + V1 tax schema`; push
 
 ### 3.4 — Seed AY 2025-26 + AY 2024-25 rules
 - [ ] V2 migration: insert one `RuleSet` row with the AY 2025-26 slabs (PLAN.md §10.4), category thresholds (§10.3), minimum-tax floors (§10.6), exemption cap (§10.2), rebate caps (§10.5)

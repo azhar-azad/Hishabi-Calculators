@@ -39,6 +39,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | Dev profile database     | H2 in-memory (PostgreSQL mode)            | 2026-05-26 |
 | Frontend styling         | Tailwind CSS                              | 2026-05-27 |
 | Frontend UI library      | shadcn/ui (Radix + Tailwind)              | 2026-05-27 |
+| DB migration tool        | Flyway (plain-SQL, forward-only)          | 2026-05-29 |
 
 Add a new row whenever a decision is made or changed.
 
