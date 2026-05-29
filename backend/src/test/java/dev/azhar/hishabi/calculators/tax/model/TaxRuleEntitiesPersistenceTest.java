@@ -61,7 +61,7 @@ class TaxRuleEntitiesPersistenceTest {
         em.persist(rs);
 
         AssessmentYear ay = new AssessmentYear();
-        ay.setLabel("2025-26");
+        ay.setLabel("TEST-2025-26");
         ay.setRuleSet(rs);
         em.persist(ay);
 
@@ -69,7 +69,7 @@ class TaxRuleEntitiesPersistenceTest {
         em.clear();
 
         AssessmentYear loaded = em.find(AssessmentYear.class, ay.getId());
-        assertThat(loaded.getLabel()).isEqualTo("2025-26");
+        assertThat(loaded.getLabel()).isEqualTo("TEST-2025-26");
 
         RuleSet loadedRs = loaded.getRuleSet();
         assertThat(loadedRs.getSalaryExemptionCap()).isEqualByComparingTo("450000.00");
@@ -93,10 +93,10 @@ class TaxRuleEntitiesPersistenceTest {
         em.persist(rs);
 
         AssessmentYear ay1 = new AssessmentYear();
-        ay1.setLabel("2024-25");
+        ay1.setLabel("TEST-2024-25");
         ay1.setRuleSet(rs);
         AssessmentYear ay2 = new AssessmentYear();
-        ay2.setLabel("2025-26");
+        ay2.setLabel("TEST-2025-26");
         ay2.setRuleSet(rs);
         em.persist(ay1);
         em.persist(ay2);
@@ -106,6 +106,89 @@ class TaxRuleEntitiesPersistenceTest {
         AssessmentYear loaded1 = em.find(AssessmentYear.class, ay1.getId());
         AssessmentYear loaded2 = em.find(AssessmentYear.class, ay2.getId());
         assertThat(loaded1.getRuleSet().getId()).isEqualTo(loaded2.getRuleSet().getId());
+    }
+
+    @Test
+    void seededRuleSetForAy2025_26MatchesPlanSection10() {
+        RuleSet rs = findAyByLabel("2025-26").getRuleSet();
+
+        // §10.2 / §10.3 / §10.5 scalar config
+        assertThat(rs.getSalaryExemptionCap()).isEqualByComparingTo("450000.00");
+        assertThat(rs.getSalaryExemptionDivisor()).isEqualTo(3);
+        assertThat(rs.getDisabledChildThresholdBonus()).isEqualByComparingTo("50000.00");
+        assertThat(rs.getRebateTaxableFraction()).isEqualByComparingTo("0.0300");
+        assertThat(rs.getRebateEligibleFraction()).isEqualByComparingTo("0.1500");
+        assertThat(rs.getRebateCap()).isEqualByComparingTo("1000000.00");
+
+        // §10.4 — six paying slabs in order; ordinal 6 is the open-ended "(rest)" slab
+        List<TaxSlab> slabs = rs.getSlabs();
+        assertThat(slabs).hasSize(6);
+        assertSlab(slabs.get(0), 1, "100000.00", "0.0500");
+        assertSlab(slabs.get(1), 2, "400000.00", "0.1000");
+        assertSlab(slabs.get(2), 3, "500000.00", "0.1500");
+        assertSlab(slabs.get(3), 4, "500000.00", "0.2000");
+        assertSlab(slabs.get(4), 5, "2000000.00", "0.2500");
+        assertThat(slabs.get(5).getOrdinal()).isEqualTo(6);
+        assertThat(slabs.get(5).getWidth()).isNull();
+        assertThat(slabs.get(5).getRate()).isEqualByComparingTo("0.3000");
+
+        // §10.3 — all six category thresholds
+        assertThat(rs.getCategoryThresholds()).hasSize(6);
+        assertThat(thresholdFor(rs, TaxpayerCategory.GENERAL)).isEqualByComparingTo("350000.00");
+        assertThat(thresholdFor(rs, TaxpayerCategory.WOMAN)).isEqualByComparingTo("400000.00");
+        assertThat(thresholdFor(rs, TaxpayerCategory.SENIOR_65_PLUS))
+                .isEqualByComparingTo("400000.00");
+        assertThat(thresholdFor(rs, TaxpayerCategory.PHYSICALLY_MENTALLY_DISABLED))
+                .isEqualByComparingTo("475000.00");
+        assertThat(thresholdFor(rs, TaxpayerCategory.GAZETTED_FREEDOM_FIGHTER))
+                .isEqualByComparingTo("500000.00");
+        assertThat(thresholdFor(rs, TaxpayerCategory.THIRD_GENDER))
+                .isEqualByComparingTo("475000.00");
+
+        // §10.6 — all three minimum-tax floors
+        assertThat(rs.getMinimumTaxFloors()).hasSize(3);
+        assertThat(floorFor(rs, Location.DHAKA_CHITTAGONG_CITY_CORP))
+                .isEqualByComparingTo("5000.00");
+        assertThat(floorFor(rs, Location.OTHER_CITY_CORP)).isEqualByComparingTo("4000.00");
+        assertThat(floorFor(rs, Location.OTHER)).isEqualByComparingTo("3000.00");
+    }
+
+    @Test
+    void seededAy2024_25SharesTheSameRuleSetAsAy2025_26() {
+        // §10.0 — NBR left the schedule unchanged, so both AYs point at one rule set.
+        AssessmentYear ay2425 = findAyByLabel("2024-25");
+        AssessmentYear ay2526 = findAyByLabel("2025-26");
+        assertThat(ay2425.getRuleSet().getId()).isEqualTo(ay2526.getRuleSet().getId());
+    }
+
+    private AssessmentYear findAyByLabel(String label) {
+        return em.createQuery(
+                        "select a from AssessmentYear a where a.label = :label",
+                        AssessmentYear.class)
+                .setParameter("label", label)
+                .getSingleResult();
+    }
+
+    private static void assertSlab(TaxSlab slab, int ordinal, String width, String rate) {
+        assertThat(slab.getOrdinal()).isEqualTo(ordinal);
+        assertThat(slab.getWidth()).isEqualByComparingTo(width);
+        assertThat(slab.getRate()).isEqualByComparingTo(rate);
+    }
+
+    private static BigDecimal thresholdFor(RuleSet rs, TaxpayerCategory cat) {
+        return rs.getCategoryThresholds().stream()
+                .filter(t -> t.getCategory() == cat)
+                .findFirst()
+                .orElseThrow()
+                .getAmount();
+    }
+
+    private static BigDecimal floorFor(RuleSet rs, Location loc) {
+        return rs.getMinimumTaxFloors().stream()
+                .filter(f -> f.getLocation() == loc)
+                .findFirst()
+                .orElseThrow()
+                .getAmount();
     }
 
     private static RuleSet newRuleSet() {
