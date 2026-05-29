@@ -3,8 +3,12 @@ package dev.azhar.hishabi.calculators.tax.service;
 import dev.azhar.hishabi.calculators.tax.model.CategoryThreshold;
 import dev.azhar.hishabi.calculators.tax.model.RuleSet;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.IncomeComponents;
+import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse.SlabTax;
+import dev.azhar.hishabi.calculators.tax.model.TaxSlab;
 import dev.azhar.hishabi.calculators.tax.model.TaxpayerCategory;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 /**
@@ -55,6 +59,43 @@ public class TaxCalculationService {
         return Money.scale(base.add(bonus));
     }
 
+    /**
+     * Step 3 (PLAN.md #10.4): walk the slab ladder in order, taxing {@code MIN(remaining, width) *
+     * rate}. Band 0 is the synthesized 0% tax-free band (width = effective first-slab threshold);
+     * the sored paying slabs follow. The top slab has a null width (open-ended) and absorbs the
+     * reminder. Returns the per-slab breakdown (band 0 through the top slab) and the summed gross
+     * tax. A non-positive taxable income yields an all-zero breakdown.
+     */
+    SlabWalkResult walkSlabs(
+            RuleSet ruleSet, BigDecimal effectiveThreshold, BigDecimal taxableIncome) {
+
+        List<SlabTax> breakdown = new ArrayList<>();
+        BigDecimal grossTax = BigDecimal.ZERO;
+        BigDecimal remaining = taxableIncome.max(BigDecimal.ZERO);
+
+        // Band 0 - the tax-free 0% band; width = effective first-slab threshold.
+        BigDecimal zeroBandAmount = remaining.min(effectiveThreshold);
+        breakdown.add(
+                new SlabTax(
+                        0,
+                        BigDecimal.ZERO,
+                        Money.scale(zeroBandAmount),
+                        Money.scale(BigDecimal.ZERO)));
+        remaining = remaining.subtract(zeroBandAmount);
+
+        // Paying slabs in ordinal order; a null width marks the open-ended top slab.
+        for (TaxSlab slab : ruleSet.getSlabs()) {
+            BigDecimal amountInSlab =
+                    (slab.getWidth() == null ? remaining : remaining.min(slab.getWidth()));
+            BigDecimal tax = Money.scale(amountInSlab.multiply(slab.getRate()));
+            breakdown.add(
+                    new SlabTax(slab.getOrdinal(), slab.getRate(), Money.scale(amountInSlab), tax));
+            grossTax = grossTax.add(tax);
+            remaining = remaining.subtract(amountInSlab);
+        }
+        return new SlabWalkResult(Money.scale(grossTax), breakdown);
+    }
+
     /** Look up a category's tax-free threshold within the rule set (PLAN.md #10.3). */
     private BigDecimal categoryThreshold(RuleSet ruleSet, TaxpayerCategory category) {
         return ruleSet.getCategoryThresholds().stream()
@@ -66,4 +107,7 @@ public class TaxCalculationService {
                                 new IllegalStateException(
                                         "No category threshold configured for " + category));
     }
+
+    /** Result of the slab walk: gross tax plus the per-slab breakdown (band 0 through top slab). */
+    record SlabWalkResult(BigDecimal grossTax, List<SlabTax> slabs) {}
 }

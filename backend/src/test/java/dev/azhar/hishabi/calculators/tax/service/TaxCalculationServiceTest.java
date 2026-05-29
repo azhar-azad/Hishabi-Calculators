@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.azhar.hishabi.calculators.tax.model.CategoryThreshold;
 import dev.azhar.hishabi.calculators.tax.model.RuleSet;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.IncomeComponents;
+import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse.SlabTax;
+import dev.azhar.hishabi.calculators.tax.model.TaxSlab;
 import dev.azhar.hishabi.calculators.tax.model.TaxpayerCategory;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
@@ -86,6 +88,47 @@ class TaxCalculationServiceTest {
                 .isEqualByComparingTo(expected);
     }
 
+    @Test
+    void slabWalkLowIncomeStaysInZeroPercentBand() {
+        // taxable 200,000 < 300,000 threshold -> entirely in band 0, no tax
+        var r =
+                service.walkSlabs(
+                        slabRuleSet(), new BigDecimal("350000.00"), new BigDecimal("200000.00"));
+        assertThat(r.grossTax()).isEqualByComparingTo("0.00");
+        assertThat(r.slabs().getFirst().taxableAmountInSlab()).isEqualByComparingTo("200000.00");
+    }
+
+    @Test
+    void slabWalkWorkedExampleMidIncome() {
+        // taxable 1,161,000, threshold 350,000 -> gross 91,650
+        var r =
+                service.walkSlabs(
+                        slabRuleSet(), new BigDecimal("350000.00"), new BigDecimal("1161000.00"));
+
+        assertThat(r.grossTax()).isEqualByComparingTo("91650.00");
+        assertSlab(r.slabs().get(0), 0, "350000.00", "0.00"); // 0% band
+        assertSlab(r.slabs().get(1), 1, "100000.00", "5000.00"); // 5%
+        assertSlab(r.slabs().get(2), 2, "400000.00", "40000.00"); // 10%
+        assertSlab(r.slabs().get(3), 3, "311000.00", "46650.00"); // 15% (partial)
+        assertThat(r.slabs().get(4).taxableAmountInSlab()).isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    void slabWalkHighIncomeSpansAllSlabs() {
+        // taxable 5,000,000, threshold 350,000 → gross 1,065,000; top slab absorbs the rest
+        var r =
+                service.walkSlabs(
+                        slabRuleSet(), new BigDecimal("350000.00"), new BigDecimal("5000000.00"));
+        assertThat(r.grossTax()).isEqualByComparingTo("1065000.00");
+        assertSlab(r.slabs().get(6), 6, "1150000.00", "345000.00"); // (rest) @ 30%
+    }
+
+    @Test
+    void slabWalkZeroTaxableIncomeProducesNoTax() {
+        var r = service.walkSlabs(slabRuleSet(), new BigDecimal("350000.00"), BigDecimal.ZERO);
+        assertThat(r.grossTax()).isEqualByComparingTo("0.00");
+    }
+
     private static RuleSet ruleSet() {
         RuleSet rs = new RuleSet();
         rs.setSalaryExemptionCap(new BigDecimal(("450000.00")));
@@ -109,10 +152,35 @@ class TaxCalculationServiceTest {
         return rs;
     }
 
+    private static RuleSet slabRuleSet() {
+        RuleSet rs = new RuleSet();
+        rs.getSlabs().add(slab(1, "100000.00", "0.0500"));
+        rs.getSlabs().add(slab(2, "400000.00", "0.1000"));
+        rs.getSlabs().add(slab(3, "500000.00", "0.1500"));
+        rs.getSlabs().add(slab(4, "500000.00", "0.2000"));
+        rs.getSlabs().add(slab(5, "2000000.00", "0.2500"));
+        rs.getSlabs().add(slab(6, null, "0.3000"));
+        return rs;
+    }
+
     private static CategoryThreshold categoryThreshold(TaxpayerCategory category, String amount) {
         CategoryThreshold t = new CategoryThreshold();
         t.setCategory(category);
         t.setAmount(new BigDecimal(amount));
         return t;
+    }
+
+    private static TaxSlab slab(int ordinal, String width, String rate) {
+        TaxSlab s = new TaxSlab();
+        s.setOrdinal(ordinal);
+        s.setWidth(width == null ? null : new BigDecimal(width));
+        s.setRate(new BigDecimal(rate));
+        return s;
+    }
+
+    private static void assertSlab(SlabTax slab, int ordinal, String taxableAmount, String tax) {
+        assertThat(slab.ordinal()).isEqualTo(ordinal);
+        assertThat(slab.taxableAmountInSlab()).isEqualByComparingTo(taxableAmount);
+        assertThat(slab.tax()).isEqualByComparingTo(tax);
     }
 }
