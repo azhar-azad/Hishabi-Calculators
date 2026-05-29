@@ -184,10 +184,10 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(tax): seed AY 2024-25 + 2025-26 rule set`; push — committed as `af01450`, pushed to `origin/code`
 
 ### 3.5 — DTOs (request + response)
-- [ ] `TaxCalculationRequest`: income components, category, location, disabled-child count, investments (by category), AIT — with Bean Validation (`@NotNull`, `@PositiveOrZero`)
-- [ ] `TaxCalculationResponse`: full breakdown matching PLAN.md §10.8
-- [ ] Test: validation rejects negative values and missing required fields
-- [ ] Self code-review (medium)
+- [x] `TaxCalculationRequest`: income components, category, location, disabled-child count, investments (by category), AIT — with Bean Validation (`@NotNull`, `@PositiveOrZero`) — Java `record` with nested `IncomeComponents` (10 fields) + `Investments` (7 fields) records. Money/count fields `@NotNull @PositiveOrZero`; `category`/`location` `@NotNull`; nested objects `@NotNull @Valid` (cascades). `assessmentYear` optional (null → controller resolves latest in 3.13)
+- [x] `TaxCalculationResponse`: full breakdown matching PLAN.md §10.8 — `record` with nested `SlabTax` (ordinal/rate/taxableAmountInSlab/tax). Fields: totalEarnings, taxFreeSalaryExemption, taxableIncome, effectiveFirstSlabThreshold, slabs list, grossTax, eligibleInvestment, rebate, afterRebate, minimumTaxFloor, minimumTaxApplied, taxAfterFloor, advanceIncomeTaxPaid, netTax. `SlabTax` can carry the synthesized 0% band (ordinal 0) so the UI shows the full ladder
+- [x] Test: validation rejects negative values and missing required fields — `TaxCalculationRequestValidationTest` (plain `Validation.buildDefaultValidatorFactory()`, no Spring context): valid→no violations, null category, negative nested income (`income.basic` path proves `@Valid` cascade), negative disabledChildren, null AIT money field. 24/24 backend tests green
+- [x] Self code-review (medium) — three-angle inline; no findings. Records map via Jackson 3 by component name (no annotations). Note: `@Valid` on the request only fires once the controller annotates the body (slice 3.13); DTOs define the contract now
 - [ ] Commit `feat(tax): add request/response DTOs`; push
 
 ### 3.6 — Calculation service: salary exemption
