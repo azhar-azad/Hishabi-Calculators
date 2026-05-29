@@ -40,6 +40,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | Frontend styling         | Tailwind CSS                              | 2026-05-27 |
 | Frontend UI library      | shadcn/ui (Radix + Tailwind)              | 2026-05-27 |
 | DB migration tool        | Flyway (plain-SQL, forward-only)          | 2026-05-29 |
+| Monetary rounding        | 2 dp (paisa), HALF_UP, centralized        | 2026-05-29 |
 
 Add a new row whenever a decision is made or changed.
 
@@ -305,3 +306,7 @@ Matches the Excel's `K52` exactly.
 - **Capital gains** and other special-rate incomes
 - **Multi-year historical calculations** (schema supports it; we seed only AY 2025-26)
 - **Tax return generation** (PDF / NBR filing format)
+
+### 10.10 Rounding policy
+
+Monetary values are computed at **2 decimal places (paisa), HALF_UP** — the source Excel keeps paisa precision (decided 2026-05-29). The policy is centralized in `Money` (in the `tax.service` package): `SCALE = 2`, `ROUNDING = HALF_UP`. Divisions (e.g. `totalEarnings / 3`) and rate multiplications round to this scale. If the source spreadsheet's rounding is ever found to differ (e.g. whole-taka), change it in that one place. The §10.8 worked example is all whole-taka, so it does not exercise fractional rounding — that confidence comes from the policy being explicit + centralized.

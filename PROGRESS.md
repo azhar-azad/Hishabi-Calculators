@@ -191,10 +191,10 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(tax): add request/response DTOs`; push — committed as `d91389a`, pushed to `origin/code`
 
 ### 3.6 — Calculation service: salary exemption
-- [ ] `TaxCalculationService` skeleton — pure function `(RuleSet, TaxCalculationRequest) → intermediate`, no DB inside
-- [ ] Step 1: `taxFreeSalary = min(total/3, 450k)`
-- [ ] Test: salary exemption below and above the 450k cap
-- [ ] Self code-review (high — money math)
+- [x] `TaxCalculationService` skeleton — pure function `(RuleSet, TaxCalculationRequest) → intermediate`, no DB inside — `@Service` in `tax.service` package (PLAN §4). No repository injected (pure). Step methods are package-private so the same-package test calls them directly; the public orchestrating `calculate(...)` is assembled across later slices as pieces land. Added `Money` helper (package-private) centralizing the rounding policy (PLAN §10.10: scale 2, HALF_UP) with `scale()` + `divide()`
+- [x] Step 1: `taxFreeSalary = min(total/3, 450k)` — `salaryExemption(RuleSet, totalEarnings)` = `MIN(Money.divide(total, divisor), cap)`. Also `totalEarnings(IncomeComponents)` sums the 10 components at monetary scale
+- [x] Test: salary exemption below and above the 450k cap — 4 tests: totalEarnings sum, below-cap (900k/3=300k), at/above-cap (worked-example 1,611k/3=537k→450k), and a fractional rounding case (1,000k/3=333,333.33 HALF_UP). 28/28 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle. No blocking findings; rounding centralized; divide-by-zero on divisor still the only standing flag (seeded data safe). Cumulative correctness oracle is the §10.8 worked-example regression (3.12)
 - [ ] Commit `feat(tax): calculation — salary exemption`; push
 
 ### 3.7 — Calculation service: effective first-slab threshold
