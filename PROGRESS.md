@@ -202,7 +202,7 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Test: one case per taxpayer category (6 tests); disabled-child add (0, 1, 3 children) — two `@ParameterizedTest` `@CsvSource` methods (junit-jupiter-params 6.0.3 confirmed on classpath): 6 categories vs §10.3 bases, and GENERAL + {0,1,3} children → 350k/400k/500k. 37/37 backend tests green
 - [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. Cumulative oracle = §10.8 regression (3.12)
 - [x] **Architecture note:** discussed Chain-of-Responsibility/Pipeline with user. Decided to KEEP isolated step-methods (CoR misfits fixed-order math; a mutable shared context is a downgrade vs typed returns for money math; respects CLAUDE.md rule 7). Revisit only at wealth surcharge / year-varying step. When assembling `calculate(...)` (3.8-3.11), thread an immutable accumulator record. Recorded as memory `project-calc-structure-decision`
-- [ ] Commit `feat(tax): calculation — effective threshold`; push
+- [x] Commit `feat(tax): calculation — effective threshold`; push — committed as `2679691`, pushed to `origin/code`
 
 ### 3.8 — Calculation service: slab walk
 - [ ] Step 3: walk slabs in order, taxing `min(remaining, slabWidth) × rate`; produce slab-by-slab breakdown
