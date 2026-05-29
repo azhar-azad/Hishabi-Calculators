@@ -208,7 +208,7 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Step 3: walk slabs in order, taxing `min(remaining, slabWidth) × rate`; produce slab-by-slab breakdown — `walkSlabs(RuleSet, effectiveThreshold, taxableIncome)` → `SlabWalkResult(grossTax, List<SlabTax>)`. `remaining = max(taxable, 0)`; **band 0** = synthesized 0% band (width = effective threshold); then stored paying slabs in ordinal order; `null` width = open-ended top slab absorbs the rest. `Money.scale` on every amount + tax. `SlabWalkResult` is the first immutable accumulator piece (per the calc-structure decision)
 - [x] Test: matches expected per-slab tax for typical incomes (low → all in slab 1, mid → spans 1–3, high → spans all 7) — 4 tests: low (200k → band 0 only, gross 0), worked-example mid (1,161,000 → **91,650**, per-slab amounts 350k/100k/400k/311k asserted incl. the partial 15% slab), high (5,000,000 → 1,065,000, top slab absorbs 1,150,000@30%), zero taxable → 0. 41/41 backend tests green
 - [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. Worked example reproduces §10.8 gross tax exactly. Cumulative oracle = §10.8 regression (3.12)
-- [ ] Commit `feat(tax): calculation — slab walk`; push
+- [x] Commit `feat(tax): calculation — slab walk`; push — committed as `f5cdcd3`, pushed to `origin/code`
 
 ### 3.9 — Calculation service: investment rebate
 - [ ] Step 4: per-item investment caps (PLAN.md §10.5), then `rebate = min(0.03 × taxable, 0.15 × eligible, 1,000,000)`; rebate = 0 if `taxable ≤ 0`
