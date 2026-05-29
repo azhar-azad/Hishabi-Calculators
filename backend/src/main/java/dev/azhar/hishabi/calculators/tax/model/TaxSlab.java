@@ -27,7 +27,7 @@ public class TaxSlab {
     @JoinColumn(name = "rule_set_id", nullable = false)
     private RuleSet ruleSet;
 
-    /** 1-based slab order within the rule set (1..N where N is the top slab. */
+    /** 1-based slab order within the rule set (1..N where N is the top slab.) */
     @Column(nullable = false)
     private Integer ordinal;
 
