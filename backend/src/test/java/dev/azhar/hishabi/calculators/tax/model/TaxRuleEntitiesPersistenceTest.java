@@ -118,6 +118,8 @@ class TaxRuleEntitiesPersistenceTest {
         assertThat(rs.getDisabledChildThresholdBonus()).isEqualByComparingTo("50000.00");
         assertThat(rs.getRebateTaxableFraction()).isEqualByComparingTo("0.0300");
         assertThat(rs.getRebateEligibleFraction()).isEqualByComparingTo("0.1500");
+        assertThat(rs.getSanchayPatraCap()).isEqualByComparingTo("500000.00");
+        assertThat(rs.getDpsCap()).isEqualByComparingTo("120000.00");
         assertThat(rs.getRebateCap()).isEqualByComparingTo("1000000.00");
 
         // §10.4 — six paying slabs in order; ordinal 6 is the open-ended "(rest)" slab
@@ -199,6 +201,8 @@ class TaxRuleEntitiesPersistenceTest {
         rs.setDisabledChildThresholdBonus(new BigDecimal("50000.00"));
         rs.setRebateTaxableFraction(new BigDecimal("0.0300"));
         rs.setRebateEligibleFraction(new BigDecimal("0.1500"));
+        rs.setSanchayPatraCap(new BigDecimal("500000.00"));
+        rs.setDpsCap(new BigDecimal("120000.00"));
         rs.setRebateCap(new BigDecimal("1000000.00"));
         return rs;
     }

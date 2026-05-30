@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import dev.azhar.hishabi.calculators.tax.model.CategoryThreshold;
 import dev.azhar.hishabi.calculators.tax.model.RuleSet;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.IncomeComponents;
+import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.Investments;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse.SlabTax;
 import dev.azhar.hishabi.calculators.tax.model.TaxSlab;
 import dev.azhar.hishabi.calculators.tax.model.TaxpayerCategory;
@@ -129,6 +130,64 @@ class TaxCalculationServiceTest {
         assertThat(r.grossTax()).isEqualByComparingTo("0.00");
     }
 
+    @Test
+    void eligibleInvestmentAppliesPerItemCaps() {
+        // Sanchay 600k -> capped 500k; DPS 200k -> capped 120k; others uncapped
+        Investments inv =
+                investments("600000", "200000", "50000", "30000", "10000", "20000", "40000");
+        // 500000 + 120000 + 50000 + 30000 + 10000 + 20000 + 40000 = 770000
+        assertThat(service.eligibleInvestment(rebateRuleSet(), inv))
+                .isEqualByComparingTo("770000.00");
+    }
+
+    @Test
+    void rebateThreePercentLegBinds() {
+        // §10.8: taxable 1,161,000 (3% = 34,830), eligible 320,000 (15% = 48,000) -> 34,830
+        assertThat(
+                        service.investmentRebate(
+                                rebateRuleSet(),
+                                new BigDecimal("1161000.00"),
+                                new BigDecimal("320000.00")))
+                .isEqualByComparingTo("34830.00");
+    }
+
+    @Test
+    void rebateFifteenPercentLegBinds() {
+        // taxable 1,161,000 (3% = 34,830), eligible 100,000 (15% = 15,000) -> 15,000
+        assertThat(
+                        service.investmentRebate(
+                                rebateRuleSet(),
+                                new BigDecimal("1161000.00"),
+                                new BigDecimal("100000.00")))
+                .isEqualByComparingTo("15000.00");
+    }
+
+    @Test
+    void rebateOneMillionCapBinds() {
+        // taxable 100,000,000 (3% = 3,000,000), eligible 50,000,000 (15% = 7,500,000) -> cap
+        // 1,000,000
+        assertThat(
+                        service.investmentRebate(
+                                rebateRuleSet(),
+                                new BigDecimal("100000000.00"),
+                                new BigDecimal("50000000.00")))
+                .isEqualByComparingTo("1000000.00");
+    }
+
+    @Test
+    void rebateIsZeroWhenTaxableIncomeNonPositive() {
+        assertThat(
+                        service.investmentRebate(
+                                rebateRuleSet(), BigDecimal.ZERO, new BigDecimal("320000.00")))
+                .isEqualByComparingTo("0.00");
+        assertThat(
+                        service.investmentRebate(
+                                rebateRuleSet(),
+                                new BigDecimal("-50000.00"),
+                                new BigDecimal("320000.00")))
+                .isEqualByComparingTo("0.00");
+    }
+
     private static RuleSet ruleSet() {
         RuleSet rs = new RuleSet();
         rs.setSalaryExemptionCap(new BigDecimal(("450000.00")));
@@ -163,6 +222,16 @@ class TaxCalculationServiceTest {
         return rs;
     }
 
+    private static RuleSet rebateRuleSet() {
+        RuleSet rs = new RuleSet();
+        rs.setRebateTaxableFraction(new BigDecimal("0.0300"));
+        rs.setRebateEligibleFraction(new BigDecimal("0.1500"));
+        rs.setRebateCap(new BigDecimal("1000000.00"));
+        rs.setSanchayPatraCap(new BigDecimal("500000.00"));
+        rs.setDpsCap(new BigDecimal("120000.00"));
+        return rs;
+    }
+
     private static CategoryThreshold categoryThreshold(TaxpayerCategory category, String amount) {
         CategoryThreshold t = new CategoryThreshold();
         t.setCategory(category);
@@ -182,5 +251,23 @@ class TaxCalculationServiceTest {
         assertThat(slab.ordinal()).isEqualTo(ordinal);
         assertThat(slab.taxableAmountInSlab()).isEqualByComparingTo(taxableAmount);
         assertThat(slab.tax()).isEqualByComparingTo(tax);
+    }
+
+    private static Investments investments(
+            String sanchayPatra,
+            String dps,
+            String mutualFund,
+            String treasuryBond,
+            String pfEmployee,
+            String pfEmployer,
+            String stock) {
+        return new Investments(
+                new BigDecimal(sanchayPatra),
+                new BigDecimal(dps),
+                new BigDecimal(mutualFund),
+                new BigDecimal(treasuryBond),
+                new BigDecimal(pfEmployee),
+                new BigDecimal(pfEmployer),
+                new BigDecimal(stock));
     }
 }

@@ -211,9 +211,9 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(tax): calculation — slab walk`; push — committed as `f5cdcd3`, pushed to `origin/code`
 
 ### 3.9 — Calculation service: investment rebate
-- [ ] Step 4: per-item investment caps (PLAN.md §10.5), then `rebate = min(0.03 × taxable, 0.15 × eligible, 1,000,000)`; rebate = 0 if `taxable ≤ 0`
-- [ ] Test: rebate cap binding on each of the three legs (3%, 15%, 1M); zero-taxable case
-- [ ] Self code-review (high — money math)
+- [x] Step 4: per-item investment caps (PLAN.md §10.5), then `rebate = min(0.03 × taxable, 0.15 × eligible, 1,000,000)`; rebate = 0 if `taxable ≤ 0` — **per-item caps made data-driven** (user decision, rule 6): added `sanchay_patra_cap` + `dps_cap` to `RuleSet` via **V3 migration** (add nullable → backfill id=1 to 500k/120k → `SET NOT NULL`) + entity fields. `eligibleInvestment(RuleSet, Investments)` caps Sanchay/DPS, sums the other 5 uncapped. `investmentRebate(...)` = `MIN(taxableFraction×taxable, eligibleFraction×eligible, rebateCap)`, returns 0 when `taxable.signum() ≤ 0`
+- [x] Test: rebate cap binding on each of the three legs (3%, 15%, 1M); zero-taxable case — 5 tests: per-item cap application (770k), 3% leg binds (§10.8 → 34,830), 15% leg binds (15,000), 1M cap binds (1,000,000), zero + negative taxable → 0. Also updated `TaxRuleEntitiesPersistenceTest`: `newRuleSet()` sets the two new NOT-NULL caps; seed test asserts them. 46/46 backend tests green; Flyway applies V1+V2+V3
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. V3 migration order correct + forward-only; dev/H2 unaffected (Flyway off, create-drop from entity); validate confirms V3 schema ↔ entity. Cumulative oracle = §10.8 regression (3.12)
 - [ ] Commit `feat(tax): calculation — investment rebate`; push
 
 ### 3.10 — Calculation service: minimum tax floor

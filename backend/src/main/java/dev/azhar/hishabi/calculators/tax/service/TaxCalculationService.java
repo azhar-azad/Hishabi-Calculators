@@ -1,11 +1,9 @@
 package dev.azhar.hishabi.calculators.tax.service;
 
-import dev.azhar.hishabi.calculators.tax.model.CategoryThreshold;
-import dev.azhar.hishabi.calculators.tax.model.RuleSet;
+import dev.azhar.hishabi.calculators.tax.model.*;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.IncomeComponents;
+import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.Investments;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse.SlabTax;
-import dev.azhar.hishabi.calculators.tax.model.TaxSlab;
-import dev.azhar.hishabi.calculators.tax.model.TaxpayerCategory;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,6 +92,40 @@ public class TaxCalculationService {
             remaining = remaining.subtract(amountInSlab);
         }
         return new SlabWalkResult(Money.scale(grossTax), breakdown);
+    }
+
+    /**
+     * Step 4a (PLAN.md #10.5): eligible investment = sum of each instrument, with Sanchay Patra and
+     * DPS capped at their per-item limits first. The other five instruments are uncapped.
+     */
+    BigDecimal eligibleInvestment(RuleSet ruleSet, Investments inv) {
+        BigDecimal sanchayPatra = inv.sanchayPatra().min(ruleSet.getSanchayPatraCap());
+        BigDecimal dps = inv.dps().min(ruleSet.getDpsCap());
+        return Money.scale(
+                sanchayPatra
+                        .add(dps)
+                        .add(inv.mutualFund())
+                        .add(inv.treasuryBond())
+                        .add(inv.providentFundEmployee())
+                        .add(inv.providentFundEmployer())
+                        .add(inv.stock()));
+    }
+
+    /**
+     * Step 4b (PLAN.md #10.5): rebate = MIN(rebateTaxableFraction x taxableIncome,
+     * rebateEligibleFraction x eligibleInvestment, rebateCap). Zero when taxable income is
+     * non-positive.
+     */
+    BigDecimal investmentRebate(
+            RuleSet ruleSet, BigDecimal taxableIncome, BigDecimal eligibleInvestment) {
+        if (taxableIncome.signum() <= 0) {
+            return Money.scale(BigDecimal.ZERO);
+        }
+        BigDecimal byTaxable =
+                Money.scale(taxableIncome.multiply(ruleSet.getRebateTaxableFraction()));
+        BigDecimal byEligible =
+                Money.scale(eligibleInvestment.multiply(ruleSet.getRebateEligibleFraction()));
+        return byTaxable.min(byEligible).min(ruleSet.getRebateCap());
     }
 
     /** Look up a category's tax-free threshold within the rule set (PLAN.md #10.3). */

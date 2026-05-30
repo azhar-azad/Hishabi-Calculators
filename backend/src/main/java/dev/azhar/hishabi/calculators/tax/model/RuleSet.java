@@ -54,6 +54,14 @@ public class RuleSet {
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal rebateCap;
 
+    /** PLAN.md #10.5 — per-item cap on Sanchay Patra before summing eligible investment. */
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal sanchayPatraCap;
+
+    /** PLAN.md #10.5 — per-item cap on DPS before summing eligible investment. */
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal dpsCap;
+
     /**
      * PLAN.md #10.4 - paying slabs (rows 2-7): the 0% threshold band is per-taxpayer, not stored.
      */
