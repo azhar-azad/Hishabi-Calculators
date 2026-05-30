@@ -284,6 +284,45 @@ class TaxCalculationServiceTest {
         assertThat(resp.slabs()).hasSize(7); // band 0 + 6 paying slabs
     }
 
+    @Test
+    void workedExampleFromPlanSection10_8ProducesNetTax56820() {
+        // PLAN.md §10.8 — canonical cross-check against the user's Excel (cell K52 = 56,820).
+        // Inputs: basic 1,611,000; Sanchay Patra 200,000 + DPS 120,000; GENERAL; Dhaka; AIT 0.
+        TaxCalculationRequest request =
+                new TaxCalculationRequest(
+                        "2025-26",
+                        TaxpayerCategory.GENERAL,
+                        Location.DHAKA_CHITTAGONG_CITY_CORP,
+                        0,
+                        basicOnly("1611000"),
+                        investments("200000", "120000", "0", "0", "0", "0", "0"),
+                        BigDecimal.ZERO);
+
+        TaxCalculationResponse resp = service.calculate(fullRuleSet(), "2025-26", request);
+
+        assertThat(resp.totalEarnings()).isEqualByComparingTo("1611000.00");
+        assertThat(resp.taxFreeSalaryExemption()).isEqualByComparingTo("450000.00");
+        assertThat(resp.taxableIncome()).isEqualByComparingTo("1161000.00");
+        assertThat(resp.effectiveFirstSlabThreshold()).isEqualByComparingTo("350000.00");
+        assertThat(resp.grossTax()).isEqualByComparingTo("91650.00");
+        assertThat(resp.eligibleInvestment()).isEqualByComparingTo("320000.00");
+        assertThat(resp.rebate()).isEqualByComparingTo("34830.00");
+        assertThat(resp.afterRebate()).isEqualByComparingTo("56820.00");
+        assertThat(resp.minimumTaxFloor()).isEqualByComparingTo("5000.00");
+        assertThat(resp.minimumTaxApplied()).isFalse();
+        assertThat(resp.taxAfterFloor()).isEqualByComparingTo("56820.00");
+        assertThat(resp.advanceIncomeTaxPaid()).isEqualByComparingTo("0.00");
+        assertThat(resp.netTax()).isEqualByComparingTo("56820.00");
+
+        // per-slab breakdown (§10.8 table)
+        assertThat(resp.slabs()).hasSize(7);
+        assertSlab(resp.slabs().get(0), 0, "350000.00", "0.00"); // 0% band
+        assertSlab(resp.slabs().get(1), 1, "100000.00", "5000.00"); // 5%
+        assertSlab(resp.slabs().get(2), 2, "400000.00", "40000.00"); // 10%
+        assertSlab(resp.slabs().get(3), 3, "311000.00", "46650.00"); // 15% (partial)
+        assertSlab(resp.slabs().get(4), 4, "0.00", "0.00"); // unused
+    }
+
     private static RuleSet ruleSet() {
         RuleSet rs = new RuleSet();
         rs.setSalaryExemptionCap(new BigDecimal(("450000.00")));
