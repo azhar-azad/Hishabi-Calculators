@@ -220,7 +220,7 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Step 5: `withFloor = (taxable > 0) ? max(afterRebate, floorByLocation) : 0` — `afterRebate(grossTax, rebate)` = MAX(0, gross−rebate); `applyMinimumTaxFloor(RuleSet, Location, taxableIncome, afterRebate)` → `MinimumTaxResult(taxAfterFloor, floor, applied)`: returns 0 when `taxable.signum() ≤ 0`, else MAX(afterRebate, floor) with `applied = floor > afterRebate`. Private `minimumTaxFloor(RuleSet, Location)` lookup throws `IllegalStateException` if absent (mirrors category-threshold lookup)
 - [x] Test: below-floor case per location (Dhaka 5k, other-CC 4k, other 3k); zero taxable income → no floor applied — 6 tests: afterRebate (worked-example 56,820 + clamps at 0), `@ParameterizedTest` 3 locations below-floor (bumped + applied=true), above-floor unchanged (applied=false), zero-taxable → 0. 52/52 backend tests green
 - [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. Worked-example after-rebate = 56,820 confirmed; Dhaka floor not binding. `MinimumTaxResult` immutable record carries the response's floor fields. Cumulative oracle = §10.8 regression (3.12)
-- [ ] Commit `feat(tax): calculation — minimum tax floor`; push
+- [x] Commit `feat(tax): calculation — minimum tax floor`; push — committed as `4364047`, pushed to `origin/code`
 
 ### 3.11 — Calculation service: AIT credit
 - [ ] Step 6: `netTax = max(0, withFloor − AIT)`; modeled separately from rebate
