@@ -231,7 +231,7 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 ### 3.12 — Worked-example regression test
 - [x] End-to-end test exactly reproducing PLAN.md §10.8 (expected net tax = 56,820) — `workedExampleFromPlanSection10_8ProducesNetTax56820` in `TaxCalculationServiceTest` feeds the exact §10.8 inputs (basic 1,611,000; Sanchay 200,000 + DPS 120,000; GENERAL; Dhaka; AIT 0) through `calculate(fullRuleSet, "2025-26", request)` and asserts the full breakdown: total 1,611,000 → exemption 450,000 → taxable 1,161,000 → gross 91,650 → eligible 320,000 → rebate 34,830 → afterRebate 56,820 → Dhaka floor 5,000 (not binding) → **netTax 56,820**, plus the per-slab rows (band0/5%/10%/15%-partial). Reuses existing fixtures; no production change. 56/56 backend tests green. Note carried to 3.13: `calculate()` reads the rule set's lazy `@OneToMany` collections, so the controller must load it with collections initialized (entity graph / transaction)
 - [x] Self code-review (medium) — test-only; encodes every §10.8 row + headline 56,820 as a permanent regression guard. No findings
-- [ ] Commit `test(tax): worked-example regression`; push
+- [x] Commit `test(tax): worked-example regression`; push — committed as `bc5569e`, pushed to `origin/code`
 
 ### 3.13 — POST /api/calculators/tax/calculate
 - [ ] Controller: `POST /api/calculators/tax/calculate` — accepts `TaxCalculationRequest`, returns `TaxCalculationResponse`; resolves active `RuleSet` by AY (default to latest)
