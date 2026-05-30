@@ -2,13 +2,10 @@ package dev.azhar.hishabi.calculators.tax.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import dev.azhar.hishabi.calculators.tax.model.CategoryThreshold;
-import dev.azhar.hishabi.calculators.tax.model.RuleSet;
+import dev.azhar.hishabi.calculators.tax.model.*;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.IncomeComponents;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest.Investments;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse.SlabTax;
-import dev.azhar.hishabi.calculators.tax.model.TaxSlab;
-import dev.azhar.hishabi.calculators.tax.model.TaxpayerCategory;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -188,6 +185,60 @@ class TaxCalculationServiceTest {
                 .isEqualByComparingTo("0.00");
     }
 
+    @Test
+    void afterRebateSubtractsRebateAndFloorsAtZero() {
+        // worked example: gross 91,650 − rebate 34,830 = 56,820
+        assertThat(service.afterRebate(new BigDecimal("91650.00"), new BigDecimal("34830.00")))
+                .isEqualByComparingTo("56820.00");
+        // a rebate exceeding gross tax cannot push tax negative
+        assertThat(service.afterRebate(new BigDecimal("3000.00"), new BigDecimal("5000.00")))
+                .isEqualByComparingTo("0.00");
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "DHAKA_CHITTAGONG_CITY_CORP, 5000.00",
+        "OTHER_CITY_CORP,            4000.00",
+        "OTHER,                      3000.00"
+    })
+    void minimumTaxFloorBumpsBelowFloorTaxPerLocation(Location location, String expectedFloor) {
+        // afterRebate 1,000 is below every floor; taxable > 0 → bumped up to the location floor
+        var r =
+                service.applyMinimumTaxFloor(
+                        floorRuleSet(),
+                        location,
+                        new BigDecimal("1000000.00"),
+                        new BigDecimal("1000.00"));
+        assertThat(r.taxAfterFloor()).isEqualByComparingTo(expectedFloor);
+        assertThat(r.applied()).isTrue();
+    }
+
+    @Test
+    void minimumTaxFloorNotAppliedWhenAfterRebateExceedsFloor() {
+        // worked example: afterRebate 56,820 > Dhaka floor 5,000 → unchanged
+        var r =
+                service.applyMinimumTaxFloor(
+                        floorRuleSet(),
+                        Location.DHAKA_CHITTAGONG_CITY_CORP,
+                        new BigDecimal("1161000.00"),
+                        new BigDecimal("56820.00"));
+        assertThat(r.taxAfterFloor()).isEqualByComparingTo("56820.00");
+        assertThat(r.applied()).isFalse();
+    }
+
+    @Test
+    void minimumTaxFloorNotAppliedWhenNoTaxableIncome() {
+        // taxable 0 → 0 owed, regardless of afterRebate
+        var r =
+                service.applyMinimumTaxFloor(
+                        floorRuleSet(),
+                        Location.DHAKA_CHITTAGONG_CITY_CORP,
+                        BigDecimal.ZERO,
+                        new BigDecimal("1000.00"));
+        assertThat(r.taxAfterFloor()).isEqualByComparingTo("0.00");
+        assertThat(r.applied()).isFalse();
+    }
+
     private static RuleSet ruleSet() {
         RuleSet rs = new RuleSet();
         rs.setSalaryExemptionCap(new BigDecimal(("450000.00")));
@@ -232,6 +283,14 @@ class TaxCalculationServiceTest {
         return rs;
     }
 
+    private static RuleSet floorRuleSet() {
+        RuleSet rs = new RuleSet();
+        rs.getMinimumTaxFloors().add(floor(Location.DHAKA_CHITTAGONG_CITY_CORP, "5000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.OTHER_CITY_CORP, "4000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.OTHER, "3000.00"));
+        return rs;
+    }
+
     private static CategoryThreshold categoryThreshold(TaxpayerCategory category, String amount) {
         CategoryThreshold t = new CategoryThreshold();
         t.setCategory(category);
@@ -251,6 +310,13 @@ class TaxCalculationServiceTest {
         assertThat(slab.ordinal()).isEqualTo(ordinal);
         assertThat(slab.taxableAmountInSlab()).isEqualByComparingTo(taxableAmount);
         assertThat(slab.tax()).isEqualByComparingTo(tax);
+    }
+
+    private static MinimumTaxFloor floor(Location location, String amount) {
+        MinimumTaxFloor f = new MinimumTaxFloor();
+        f.setLocation(location);
+        f.setAmount(new BigDecimal(amount));
+        return f;
     }
 
     private static Investments investments(

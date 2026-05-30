@@ -128,6 +128,27 @@ public class TaxCalculationService {
         return byTaxable.min(byEligible).min(ruleSet.getRebateCap());
     }
 
+    /** Step 5a (PLAN.md #10.6): {@code afterRebate = MAX(0, grossTax - rebate)}. */
+    BigDecimal afterRebate(BigDecimal grossTax, BigDecimal rebate) {
+        return Money.scale(grossTax.subtract(rebate).max(BigDecimal.ZERO));
+    }
+
+    /**
+     * Step 5b (PLAN.md #10.6): apply the location's minimum tax floor - {@code withFloor =
+     * (taxableIncome > 0) ? MAX(afterRebate, floor) : 0}. A taxpayer with no taxable income owes
+     * nothing, even below the floor.
+     */
+    MinimumTaxResult applyMinimumTaxFloor(
+            RuleSet ruleSet, Location location, BigDecimal taxableIncome, BigDecimal afterRebate) {
+
+        BigDecimal floor = minimumTaxFloor(ruleSet, location);
+        if (taxableIncome.signum() <= 0) {
+            return new MinimumTaxResult(Money.scale(BigDecimal.ZERO), floor, false);
+        }
+        boolean applied = floor.compareTo(afterRebate) > 0;
+        return new MinimumTaxResult(Money.scale(afterRebate.max(floor)), floor, applied);
+    }
+
     /** Look up a category's tax-free threshold within the rule set (PLAN.md #10.3). */
     private BigDecimal categoryThreshold(RuleSet ruleSet, TaxpayerCategory category) {
         return ruleSet.getCategoryThresholds().stream()
@@ -140,6 +161,23 @@ public class TaxCalculationService {
                                         "No category threshold configured for " + category));
     }
 
+    /** Look up a location's minimum tax floor within the rule set (PLAN.md #10.6) */
+    private static BigDecimal minimumTaxFloor(RuleSet ruleSet, Location location) {
+        return ruleSet.getMinimumTaxFloors().stream()
+                .filter(f -> f.getLocation() == location)
+                .findFirst()
+                .map(MinimumTaxFloor::getAmount)
+                .orElseThrow(
+                        () ->
+                                new IllegalStateException(
+                                        "No minimum tax floor configured for " + location));
+    }
+
     /** Result of the slab walk: gross tax plus the per-slab breakdown (band 0 through top slab). */
     record SlabWalkResult(BigDecimal grossTax, List<SlabTax> slabs) {}
+
+    /**
+     * Result of the minimum-tax-floor step: the floored tax, the floor value, and whether it bound.
+     */
+    record MinimumTaxResult(BigDecimal taxAfterFloor, BigDecimal floor, boolean applied) {}
 }
