@@ -223,9 +223,9 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(tax): calculation — minimum tax floor`; push — committed as `4364047`, pushed to `origin/code`
 
 ### 3.11 — Calculation service: AIT credit
-- [ ] Step 6: `netTax = max(0, withFloor − AIT)`; modeled separately from rebate
-- [ ] Test: AIT > tax → net = 0 (no refund modeled); AIT < tax → net = tax − AIT
-- [ ] Self code-review (high — money math)
+- [x] Step 6: `netTax = max(0, withFloor − AIT)`; modeled separately from rebate — `netTax(withFloor, advanceIncomeTaxPaid)` = MAX(0, withFloor − AIT). **Also assembled the public `calculate(RuleSet, assessmentYear, TaxCalculationRequest) → TaxCalculationResponse`** threading all six steps via local finals (chose locals over an accumulator record — clearer for a single straight-line method; the `SlabWalkResult`/`MinimumTaxResult` records already bundle multi-value outputs). Response constructor order matches the record component order
+- [x] Test: AIT > tax → net = 0 (no refund modeled); AIT < tax → net = tax − AIT — 2 netTax tests + a `calculate()` assembly test on a simple hand-computed scenario (basic 900k → net 20,000, full breakdown wired, 7 slab rows). Reusable `fullRuleSet()`/`basicOnly()`/`noInvestments()` fixtures added for 3.12. Exact §10.8 → 56,820 regression is slice 3.12. 55/55 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. calc math now complete end-to-end. Cumulative oracle = §10.8 regression (3.12, next)
 - [ ] Commit `feat(tax): calculation — AIT credit`; push
 
 ### 3.12 — Worked-example regression test

@@ -239,6 +239,51 @@ class TaxCalculationServiceTest {
         assertThat(r.applied()).isFalse();
     }
 
+    @Test
+    void netTaxSubtractsAitCredit() {
+        // AIT below tax: net = tax − AIT
+        assertThat(service.netTax(new BigDecimal("56820.00"), new BigDecimal("20000.00")))
+                .isEqualByComparingTo("36820.00");
+    }
+
+    @Test
+    void netTaxIsZeroWhenAitExceedsTaxNoRefund() {
+        // AIT above tax: net = 0 (no refund modeled)
+        assertThat(service.netTax(new BigDecimal("56820.00"), new BigDecimal("80000.00")))
+                .isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    void calculateWiresAllStepsTogether() {
+        // Simple scenario (full §10.8 reproduction is slice 3.12): basic 900,000, GENERAL, OTHER,
+        // no children, no investments, no AIT.
+        // exemption 300,000 → taxable 600,000; band0 350k@0 + 100k@5%(5,000) + 150k@10%(15,000) =
+        // gross 20,000; no rebate; floor 3,000 not binding; net 20,000.
+        TaxCalculationRequest request =
+                new TaxCalculationRequest(
+                        "2025-26",
+                        TaxpayerCategory.GENERAL,
+                        Location.OTHER,
+                        0,
+                        basicOnly("900000"),
+                        noInvestments(),
+                        BigDecimal.ZERO);
+
+        TaxCalculationResponse resp = service.calculate(fullRuleSet(), "2025-26", request);
+
+        assertThat(resp.assessmentYear()).isEqualTo("2025-26");
+        assertThat(resp.totalEarnings()).isEqualByComparingTo("900000.00");
+        assertThat(resp.taxFreeSalaryExemption()).isEqualByComparingTo("300000.00");
+        assertThat(resp.taxableIncome()).isEqualByComparingTo("600000.00");
+        assertThat(resp.effectiveFirstSlabThreshold()).isEqualByComparingTo("350000.00");
+        assertThat(resp.grossTax()).isEqualByComparingTo("20000.00");
+        assertThat(resp.rebate()).isEqualByComparingTo("0.00");
+        assertThat(resp.afterRebate()).isEqualByComparingTo("20000.00");
+        assertThat(resp.minimumTaxApplied()).isFalse();
+        assertThat(resp.netTax()).isEqualByComparingTo("20000.00");
+        assertThat(resp.slabs()).hasSize(7); // band 0 + 6 paying slabs
+    }
+
     private static RuleSet ruleSet() {
         RuleSet rs = new RuleSet();
         rs.setSalaryExemptionCap(new BigDecimal(("450000.00")));
@@ -291,6 +336,38 @@ class TaxCalculationServiceTest {
         return rs;
     }
 
+    private static RuleSet fullRuleSet() {
+        RuleSet rs = new RuleSet();
+        rs.setSalaryExemptionCap(new BigDecimal("450000.00"));
+        rs.setSalaryExemptionDivisor(3);
+        rs.setDisabledChildThresholdBonus(new BigDecimal("50000.00"));
+        rs.setRebateTaxableFraction(new BigDecimal("0.0300"));
+        rs.setRebateEligibleFraction(new BigDecimal("0.1500"));
+        rs.setRebateCap(new BigDecimal("1000000.00"));
+        rs.setSanchayPatraCap(new BigDecimal("500000.00"));
+        rs.setDpsCap(new BigDecimal("120000.00"));
+        rs.getSlabs().add(slab(1, "100000.00", "0.0500"));
+        rs.getSlabs().add(slab(2, "400000.00", "0.1000"));
+        rs.getSlabs().add(slab(3, "500000.00", "0.1500"));
+        rs.getSlabs().add(slab(4, "500000.00", "0.2000"));
+        rs.getSlabs().add(slab(5, "2000000.00", "0.2500"));
+        rs.getSlabs().add(slab(6, null, "0.3000"));
+        rs.getCategoryThresholds().add(categoryThreshold(TaxpayerCategory.GENERAL, "350000.00"));
+        rs.getCategoryThresholds().add(categoryThreshold(TaxpayerCategory.WOMAN, "400000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.SENIOR_65_PLUS, "400000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.PHYSICALLY_MENTALLY_DISABLED, "475000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.GAZETTED_FREEDOM_FIGHTER, "500000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.THIRD_GENDER, "475000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.DHAKA_CHITTAGONG_CITY_CORP, "5000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.OTHER_CITY_CORP, "4000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.OTHER, "3000.00"));
+        return rs;
+    }
+
     private static CategoryThreshold categoryThreshold(TaxpayerCategory category, String amount) {
         CategoryThreshold t = new CategoryThreshold();
         t.setCategory(category);
@@ -317,6 +394,16 @@ class TaxCalculationServiceTest {
         f.setLocation(location);
         f.setAmount(new BigDecimal(amount));
         return f;
+    }
+
+    private static IncomeComponents basicOnly(String basic) {
+        BigDecimal z = BigDecimal.ZERO;
+        return new IncomeComponents(new BigDecimal(basic), z, z, z, z, z, z, z, z, z);
+    }
+
+    private static Investments noInvestments() {
+        BigDecimal z = BigDecimal.ZERO;
+        return new Investments(z, z, z, z, z, z, z);
     }
 
     private static Investments investments(

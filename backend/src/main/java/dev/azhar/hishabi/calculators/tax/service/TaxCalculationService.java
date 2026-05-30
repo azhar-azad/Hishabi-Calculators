@@ -149,6 +149,58 @@ public class TaxCalculationService {
         return new MinimumTaxResult(Money.scale(afterRebate.max(floor)), floor, applied);
     }
 
+    /**
+     * Step 6 (PLAN.md #10.7): {@code netTax = MAX(0, withFloor - AIT)}. AIT is a withholding
+     * credit, not a rebate - modeled separately. No refund is produced when AIT exceeds the tax
+     * due.
+     */
+    BigDecimal netTax(BigDecimal withFloor, BigDecimal advanceIncomeTaxPaid) {
+        return Money.scale(withFloor.subtract(advanceIncomeTaxPaid).max(BigDecimal.ZERO));
+    }
+
+    /**
+     * Full calculation (PLAN.md #10): threads the six steps and assembles the breakdown response.
+     * Pure - no DB access. {@code assessmentYear} is the resolved AY label the controller looked
+     * the rule set up by (slice 3.13).
+     */
+    public TaxCalculationResponse calculate(
+            RuleSet ruleSet, String assessmentYear, TaxCalculationRequest request) {
+
+        BigDecimal totalEarnings = totalEarnings(request.income());
+        BigDecimal taxFreeSalary = salaryExemption(ruleSet, totalEarnings);
+        BigDecimal taxableIncome = Money.scale(totalEarnings.subtract(taxFreeSalary));
+
+        BigDecimal effectiveThreshold =
+                effectiveFirstSlabThreshold(
+                        ruleSet, request.category(), request.disabledChildren());
+        SlabWalkResult slabWalk = walkSlabs(ruleSet, effectiveThreshold, taxableIncome);
+
+        BigDecimal eligibleInvestments = eligibleInvestment(ruleSet, request.investments());
+        BigDecimal rebate = investmentRebate(ruleSet, taxableIncome, eligibleInvestments);
+        BigDecimal afterRebate = afterRebate(slabWalk.grossTax(), rebate);
+
+        MinimumTaxResult floorResult =
+                applyMinimumTaxFloor(ruleSet, request.location(), taxableIncome, afterRebate);
+        BigDecimal netTax = netTax(floorResult.taxAfterFloor(), request.advanceIncomeTaxPaid());
+
+        return new TaxCalculationResponse(
+                assessmentYear,
+                totalEarnings,
+                taxFreeSalary,
+                taxableIncome,
+                effectiveThreshold,
+                slabWalk.slabs(),
+                slabWalk.grossTax(),
+                eligibleInvestments,
+                rebate,
+                afterRebate,
+                floorResult.floor(),
+                floorResult.applied(),
+                floorResult.taxAfterFloor(),
+                request.advanceIncomeTaxPaid(),
+                netTax);
+    }
+
     /** Look up a category's tax-free threshold within the rule set (PLAN.md #10.3). */
     private BigDecimal categoryThreshold(RuleSet ruleSet, TaxpayerCategory category) {
         return ruleSet.getCategoryThresholds().stream()
