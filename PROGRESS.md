@@ -240,10 +240,10 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(tax): POST /api/calculators/tax/calculate`; push — committed as `dd5ed28`, pushed to `origin/code`
 
 ### 3.14 — GET /api/calculators/tax/rules/{assessmentYear}
-- [ ] Controller: returns the rule set for an AY (slabs, category thresholds, floors, caps)
-- [ ] Test: 200 with full payload for `2025-26`; 404 for unknown year
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(tax): GET /api/calculators/tax/rules/{year}`; push
+- [x] Controller: returns the rule set for an AY (slabs, category thresholds, floors, caps) — `TaxCalculationController.rules(@PathVariable)` delegates to a new `TaxCalculationFacade.getRules(label)` (`@Transactional(readOnly=true)`, reuses the existing `resolveAssessmentYear` so unknown year → `NotFoundException` → 404). New `TaxRulesResponse` DTO (record with nested `Slab`/`Threshold`/`Floor`) maps the rule set inside the tx so the lazy `@OneToMany` collections initialize. The synthesized 0% band is intentionally excluded (per-taxpayer, not stored). Thresholds/floors sorted by enum order for deterministic output; slabs already `@OrderBy ordinal`
+- [x] Test: 200 with full payload for `2025-26`; 404 for unknown year — `TaxRulesControllerTest` (`@SpringBootTest` + MockMvc + Testcontainers + Flyway): GET `/rules/2025-26` → 200, deserializes into `TaxRulesResponse` and asserts every §10 value (scalars + caps, all 6 slabs incl. null-width top, GENERAL threshold, Dhaka floor) with AssertJ `isEqualByComparingTo` (robust for `BigDecimal`); unknown year `1999-00` → 404 `NOT_FOUND`. 61/61 backend tests green via `./mvnw verify`
+- [x] Self code-review (medium) — ran `/code-review` skill (7 angles inline; diff is small + read-only, no money mutation). No correctness/security findings. One maintainability nit: user-typed wildcard imports (`tax.model.*`, `web.bind.annotation.*`) drifted from the codebase's explicit-import convention — reverted to explicit single imports per user decision; rebuilt green
+- [x] Commit `feat(tax): GET /api/calculators/tax/rules/{year}`; push
 
 ---
 
