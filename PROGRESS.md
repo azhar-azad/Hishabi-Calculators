@@ -156,93 +156,94 @@ Legend: `[ ]` = todo, `[x]` = done, `[~]` = in progress, `[-]` = skipped/deferre
 _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no DB inside), data-driven rules._
 
 ### 3.1 — Tax package + domain enums
-- [ ] Create package `dev.azhar.hishabi.calculators.tax`
-- [ ] Enums: `TaxpayerCategory` (GENERAL, WOMAN, SENIOR_65_PLUS, PHYSICALLY_MENTALLY_DISABLED, GAZETTED_FREEDOM_FIGHTER, THIRD_GENDER), `Location` (DHAKA_CHITTAGONG_CITY_CORP, OTHER_CITY_CORP, OTHER)
-- [ ] Test: JSON serialization roundtrip via Jackson
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(tax): add tax package + domain enums`; push
+- [x] Create package `dev.azhar.hishabi.calculators.tax` — created `tax/model/` sub-package per PLAN.md §4 (enums are domain primitives alongside future entities + DTOs)
+- [x] Enums: `TaxpayerCategory` (GENERAL, WOMAN, SENIOR_65_PLUS, PHYSICALLY_MENTALLY_DISABLED, GAZETTED_FREEDOM_FIGHTER, THIRD_GENDER), `Location` (DHAKA_CHITTAGONG_CITY_CORP, OTHER_CITY_CORP, OTHER) — typed by user in `TaxpayerCategory.java` + `Location.java`. Both with Javadoc grounding to PLAN.md §10.3 / §10.6. Caught a typo on first try (`GAZETTED_FREDOM_FIGHTER` missing the second E — Jackson's error message surfaced it, since the test serialized all enum values and the typo printed in the "accepted values" list)
+- [x] Test: JSON serialization roundtrip via Jackson — `TaxEnumsJsonTest.java` covers (1) explicit uppercase serialization format, (2) full roundtrip across all enum values for both enums, (3) unknown value fails to deserialise with `InvalidFormatException`. **Discovered Spring Boot 4 ships Jackson 3 at `tools.jackson.*`** (not `com.fasterxml.jackson.*`) — first proposed test used Jackson 2 imports; fix used `tools.jackson.databind.ObjectMapper`, `new JsonMapper()`, `tools.jackson.databind.exc.InvalidFormatException`. Saved as memory `project-jackson-3-caveat` since this will recur in every future JSON-handling slice (DTOs, controllers, custom serializers)
+- [x] Self code-review (medium) — three-angle inline; 15/15 unit tests green (10 prior + 4 new + 1 Application boot test that turned up after the d1e99f0 rename — wait that's 15 including the duplicate. Verified: `./mvnw '-Dtest=!PostgresContainerSmokeTest' test` runs 15/15 clean; Spotless clean
+- [x] Commit `feat(tax): add tax package + domain enums`; push — committed as `e6e64e3` (preceded by `d1e99f0` follow-up refactor renaming `CalculatorsApplication` → `Application`), pushed to `origin/code`
 
 ### 3.2 — Rule entities
-- [ ] Entities per PLAN.md §6: `AssessmentYear`, `RuleSet`, `TaxSlab` (ordered, belongs to `RuleSet`), `CategoryThreshold`, `MinimumTaxFloor`
-- [ ] JPA mappings + relationships
-- [ ] Test: persist + fetch roundtrip via Testcontainers Postgres
-- [ ] Self code-review (high — schema is foundational)
-- [ ] Commit `feat(tax): add rule entities`; push
+- [x] Entities per PLAN.md §6: `AssessmentYear`, `RuleSet`, `TaxSlab` (ordered, belongs to `RuleSet`), `CategoryThreshold`, `MinimumTaxFloor` — typed by user. `RuleSet` is the aggregate root holding scalar config (exemption cap+divisor, disabled-child bonus, rebate fractions+cap) plus three `@OneToMany` child lists (cascade=ALL, orphanRemoval). `TaxSlab` stores only the 6 *paying* slabs (rows 2-7 of §10.4); the 0% threshold band is per-taxpayer and computed at calc time, not stored. `width` is nullable (null = the open-ended "(rest)" top slab). Money = `numeric(15,2)`, rates = `numeric(5,4)`. Enum columns use `@Enumerated(STRING)`
+- [x] JPA mappings + relationships — IDENTITY ids; `@OrderBy("ordinal ASC")` on slabs; unique constraints on `(rule_set_id, ordinal)`, `(rule_set_id, category)`, `(rule_set_id, location)`, and global unique on `AssessmentYear.label`. Lombok `@Getter/@Setter/@NoArgsConstructor` (no `@Data` — avoids dodgy entity equals/hashCode). **Hibernate 7 enum-DDL surprise**: `@Enumerated(STRING)` made Hibernate emit MySQL-style `enum(...)` column DDL that Postgres rejects (`type "enum" does not exist`) → table silently not created → INSERT failed with `relation does not exist`. `@Column(length=...)` and the `hibernate.type.preferred_enum_jdbc_type` YAML property both failed to fix it; **`columnDefinition = "varchar(N)"`** on the enum fields works. Saved as memory `project-hibernate7-enum-caveat`
+- [x] Test: persist + fetch roundtrip via Testcontainers Postgres — `TaxRuleEntitiesPersistenceTest` (`@DataJpaTest` + `@AutoConfigureTestDatabase(replace=NONE)` + Testcontainers `postgres:16-alpine`, `ddl-auto=create-drop`). Needed explicit `spring.datasource.driver-class-name=org.postgresql.Driver` via `@DynamicPropertySource` because H2 (runtime-scoped since slice 1.2) was on the classpath and Boot's auto-config grabbed H2's driver despite the injected Postgres URL. Two tests: (1) full RuleSet+6 slabs+2 thresholds+2 floors roundtrip with `em.flush()/clear()` to force a real DB read, asserting slab order + null top-slab width; (2) two AssessmentYears sharing one RuleSet (§10.0). 18/18 backend tests green via `./mvnw verify`
+- [x] Self code-review (high — schema is foundational) — high-effort three-angle review. No blocking findings. Noted follow-ups: (a) no bidirectional-sync helper methods (`addSlab` etc.) — risk of half-set relationships, but mitigated since seeding (3.4) is via Flyway SQL not JPA; (b) `salaryExemptionDivisor` has no DB-level divide-by-zero guard — calc service (3.6) must handle; (c) entity↔Flyway schema-drift seam to reconcile in 3.3; (d) trivial Javadoc typo in `TaxSlab` line 30 (missing close paren). Independent `code-reviewer` subagent offered to user as optional
+- [x] Commit `feat(tax): add rule entities`; push — committed as `68a1e92`, pushed to `origin/code`
 
 ### 3.3 — Migration tool *(decision + wire-up)*
-- [ ] Decide Flyway vs Liquibase (record in PLAN.md §2)
-- [ ] Add dependency + config; V1 migration creates tax rule tables (no seed yet)
-- [ ] Test: migration runs cleanly against Testcontainers
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(backend): wire <tool> migrations + V1 tax schema`; push
+- [x] Decide Flyway vs Liquibase (record in PLAN.md §2) — **Flyway** (plain-SQL, forward-only). Recorded in PLAN.md §2. Rationale: PLAN §10 treats tax rules as *data* — seeds (3.4) read far cleaner as raw `INSERT` SQL than Liquibase changesets; solo dev already knows SQL; no cross-DB abstraction needed (Postgres is the only real target; H2 is just fast-boot). Forward-only is fine — CLAUDE.md already forbids rewriting applied migrations
+- [x] Add dependency + config; V1 migration creates tax rule tables (no seed yet) — `V1__create_tax_rule_tables.sql` creates all 5 `tax_*` tables with named FK/unique constraints, column types mirroring the entities so `ddl-auto: validate` passes. **Three deps needed** (Boot 4 split autoconfig into per-tech modules): `flyway-core` + `flyway-database-postgresql` (the library, for PG16) **and `org.springframework.boot:spring-boot-flyway`** (the autoconfig module). The last one was initially missed — without it Flyway silently never runs, which would have **broken prod boot** (prod uses `validate` against an empty schema). Config: Flyway OFF by default in `application.yml` (H2 dev/tests can't run PG SQL), ON in `application-prod.yml`, force-OFF in `ProdProfileBootTest` (overrides prod→H2)
+- [x] Test: migration runs cleanly against Testcontainers — switched `TaxRuleEntitiesPersistenceTest` from `ddl-auto: create-drop` to **Flyway + `validate`** (added `@ImportAutoConfiguration(FlywayAutoConfiguration.class)` — Boot 4's `@DataJpaTest` slice imports only the 2 JPA autoconfigs, not Flyway). Logs confirm `Successfully applied 1 migration ... now at version v1`, then `validate` passes → **proves V1 SQL ⟷ entity mappings agree** (closes the 3.2 drift seam). 17/17 backend tests green under `./mvnw verify`
+- [x] Self code-review (medium) — three-angle inline. No blocking findings. Caught the missing `spring-boot-flyway` prod-boot bug. Documented seam: dev/H2 schema via Hibernate `create-drop` vs prod/Postgres via Flyway — both checked against the same entities (validate test is the guard), so transitively consistent. V1 now immutable; seeds → V2 (3.4)
+- [x] Commit `feat(backend): wire Flyway migrations + V1 tax schema`; push — committed as `f7979de`, pushed to `origin/code`
 
 ### 3.4 — Seed AY 2025-26 + AY 2024-25 rules
-- [ ] V2 migration: insert one `RuleSet` row with the AY 2025-26 slabs (PLAN.md §10.4), category thresholds (§10.3), minimum-tax floors (§10.6), exemption cap (§10.2), rebate caps (§10.5)
-- [ ] V2 migration: insert `AssessmentYear` rows for `2024-25` and `2025-26` pointing to the same `RuleSet` (per PLAN.md §10.0)
-- [ ] Test: query AY 2025-26 → slab structure matches §10.4; AY 2024-25 → same `RuleSet` reference
-- [ ] Self code-review (high — tax data correctness)
-- [ ] Commit `feat(tax): seed AY 2024-25 + 2025-26 rule set`; push
+- [x] V2 migration: insert one `RuleSet` row with the AY 2025-26 slabs (PLAN.md §10.4), category thresholds (§10.3), minimum-tax floors (§10.6), exemption cap (§10.2), rebate caps (§10.5) — `V2__seed_ay_2024_25_and_2025_26.sql`. Rule set seeded with explicit `id=1` (deterministic/auditable reference data) followed by `ALTER TABLE tax_rule_set ALTER COLUMN id RESTART WITH 2` so later IDENTITY inserts don't collide with id=1 (Postgres `GENERATED BY DEFAULT` doesn't advance the sequence on explicit insert). Every value carries a §-ref comment. 6 paying slabs (ordinal 6 = NULL-width "(rest)"), 6 category thresholds, 3 floors
+- [x] V2 migration: insert `AssessmentYear` rows for `2024-25` and `2025-26` pointing to the same `RuleSet` (per PLAN.md §10.0) — both reference `rule_set_id=1`
+- [x] Test: query AY 2025-26 → slab structure matches §10.4; AY 2024-25 → same `RuleSet` reference — added 2 read-only seed-verification tests to `TaxRuleEntitiesPersistenceTest` (reuses its Flyway+Testcontainers context): one asserts every §10 value on the AY 2025-26 rule set (scalars, all 6 slabs in order incl. null top width, all 6 thresholds via lookup, all 3 floors), the other asserts AY 2024-25 shares the same rule-set id. Also fixed a collision the seed introduced: the 2 pre-existing roundtrip tests inserted AY label `2025-26`/`2024-25` which now clash with seeded rows → relabeled `TEST-*`. 19/19 backend tests green; Flyway log shows `applied 2 migrations, now at version v2`
+- [x] Self code-review (high — tax data correctness) — high-effort self-review (manually cross-checked all values vs §10 + spot-checked against the §10.8 worked example) **plus an independent cold-context reviewer subagent** that re-read §10 against the V2 SQL value-by-value and confirmed all 23 values + enum-name matches + FK consistency with zero discrepancies. Definitive oracle remains the §10.8 worked-example regression in slice 3.12 (net tax = 56,820 vs the user's Excel)
+- [x] Commit `feat(tax): seed AY 2024-25 + 2025-26 rule set`; push — committed as `af01450`, pushed to `origin/code`
 
 ### 3.5 — DTOs (request + response)
-- [ ] `TaxCalculationRequest`: income components, category, location, disabled-child count, investments (by category), AIT — with Bean Validation (`@NotNull`, `@PositiveOrZero`)
-- [ ] `TaxCalculationResponse`: full breakdown matching PLAN.md §10.8
-- [ ] Test: validation rejects negative values and missing required fields
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(tax): add request/response DTOs`; push
+- [x] `TaxCalculationRequest`: income components, category, location, disabled-child count, investments (by category), AIT — with Bean Validation (`@NotNull`, `@PositiveOrZero`) — Java `record` with nested `IncomeComponents` (10 fields) + `Investments` (7 fields) records. Money/count fields `@NotNull @PositiveOrZero`; `category`/`location` `@NotNull`; nested objects `@NotNull @Valid` (cascades). `assessmentYear` optional (null → controller resolves latest in 3.13)
+- [x] `TaxCalculationResponse`: full breakdown matching PLAN.md §10.8 — `record` with nested `SlabTax` (ordinal/rate/taxableAmountInSlab/tax). Fields: totalEarnings, taxFreeSalaryExemption, taxableIncome, effectiveFirstSlabThreshold, slabs list, grossTax, eligibleInvestment, rebate, afterRebate, minimumTaxFloor, minimumTaxApplied, taxAfterFloor, advanceIncomeTaxPaid, netTax. `SlabTax` can carry the synthesized 0% band (ordinal 0) so the UI shows the full ladder
+- [x] Test: validation rejects negative values and missing required fields — `TaxCalculationRequestValidationTest` (plain `Validation.buildDefaultValidatorFactory()`, no Spring context): valid→no violations, null category, negative nested income (`income.basic` path proves `@Valid` cascade), negative disabledChildren, null AIT money field. 24/24 backend tests green
+- [x] Self code-review (medium) — three-angle inline; no findings. Records map via Jackson 3 by component name (no annotations). Note: `@Valid` on the request only fires once the controller annotates the body (slice 3.13); DTOs define the contract now
+- [x] Commit `feat(tax): add request/response DTOs`; push — committed as `d91389a`, pushed to `origin/code`
 
 ### 3.6 — Calculation service: salary exemption
-- [ ] `TaxCalculationService` skeleton — pure function `(RuleSet, TaxCalculationRequest) → intermediate`, no DB inside
-- [ ] Step 1: `taxFreeSalary = min(total/3, 450k)`
-- [ ] Test: salary exemption below and above the 450k cap
-- [ ] Self code-review (high — money math)
-- [ ] Commit `feat(tax): calculation — salary exemption`; push
+- [x] `TaxCalculationService` skeleton — pure function `(RuleSet, TaxCalculationRequest) → intermediate`, no DB inside — `@Service` in `tax.service` package (PLAN §4). No repository injected (pure). Step methods are package-private so the same-package test calls them directly; the public orchestrating `calculate(...)` is assembled across later slices as pieces land. Added `Money` helper (package-private) centralizing the rounding policy (PLAN §10.10: scale 2, HALF_UP) with `scale()` + `divide()`
+- [x] Step 1: `taxFreeSalary = min(total/3, 450k)` — `salaryExemption(RuleSet, totalEarnings)` = `MIN(Money.divide(total, divisor), cap)`. Also `totalEarnings(IncomeComponents)` sums the 10 components at monetary scale
+- [x] Test: salary exemption below and above the 450k cap — 4 tests: totalEarnings sum, below-cap (900k/3=300k), at/above-cap (worked-example 1,611k/3=537k→450k), and a fractional rounding case (1,000k/3=333,333.33 HALF_UP). 28/28 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle. No blocking findings; rounding centralized; divide-by-zero on divisor still the only standing flag (seeded data safe). Cumulative correctness oracle is the §10.8 worked-example regression (3.12)
+- [x] Commit `feat(tax): calculation — salary exemption`; push — committed as `306d5b2`, pushed to `origin/code`
 
 ### 3.7 — Calculation service: effective first-slab threshold
-- [ ] Step 2: `effectiveThreshold = categoryThreshold + 50,000 × disabledChildren`
-- [ ] Test: one case per taxpayer category (6 tests); disabled-child add (0, 1, 3 children)
-- [ ] Self code-review (high — money math)
-- [ ] Commit `feat(tax): calculation — effective threshold`; push
+- [x] Step 2: `effectiveThreshold = categoryThreshold + 50,000 × disabledChildren` — `effectiveFirstSlabThreshold(RuleSet, category, disabledChildren)`; private `categoryThreshold(...)` looks up the category's amount in `RuleSet.categoryThresholds`, throwing `IllegalStateException` if absent (data-integrity guard; seed has all 6). `Money.scale` applied
+- [x] Test: one case per taxpayer category (6 tests); disabled-child add (0, 1, 3 children) — two `@ParameterizedTest` `@CsvSource` methods (junit-jupiter-params 6.0.3 confirmed on classpath): 6 categories vs §10.3 bases, and GENERAL + {0,1,3} children → 350k/400k/500k. 37/37 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. Cumulative oracle = §10.8 regression (3.12)
+- [x] **Architecture note:** discussed Chain-of-Responsibility/Pipeline with user. Decided to KEEP isolated step-methods (CoR misfits fixed-order math; a mutable shared context is a downgrade vs typed returns for money math; respects CLAUDE.md rule 7). Revisit only at wealth surcharge / year-varying step. When assembling `calculate(...)` (3.8-3.11), thread an immutable accumulator record. Recorded as memory `project-calc-structure-decision`
+- [x] Commit `feat(tax): calculation — effective threshold`; push — committed as `2679691`, pushed to `origin/code`
 
 ### 3.8 — Calculation service: slab walk
-- [ ] Step 3: walk slabs in order, taxing `min(remaining, slabWidth) × rate`; produce slab-by-slab breakdown
-- [ ] Test: matches expected per-slab tax for typical incomes (low → all in slab 1, mid → spans 1–3, high → spans all 7)
-- [ ] Self code-review (high — money math)
-- [ ] Commit `feat(tax): calculation — slab walk`; push
+- [x] Step 3: walk slabs in order, taxing `min(remaining, slabWidth) × rate`; produce slab-by-slab breakdown — `walkSlabs(RuleSet, effectiveThreshold, taxableIncome)` → `SlabWalkResult(grossTax, List<SlabTax>)`. `remaining = max(taxable, 0)`; **band 0** = synthesized 0% band (width = effective threshold); then stored paying slabs in ordinal order; `null` width = open-ended top slab absorbs the rest. `Money.scale` on every amount + tax. `SlabWalkResult` is the first immutable accumulator piece (per the calc-structure decision)
+- [x] Test: matches expected per-slab tax for typical incomes (low → all in slab 1, mid → spans 1–3, high → spans all 7) — 4 tests: low (200k → band 0 only, gross 0), worked-example mid (1,161,000 → **91,650**, per-slab amounts 350k/100k/400k/311k asserted incl. the partial 15% slab), high (5,000,000 → 1,065,000, top slab absorbs 1,150,000@30%), zero taxable → 0. 41/41 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. Worked example reproduces §10.8 gross tax exactly. Cumulative oracle = §10.8 regression (3.12)
+- [x] Commit `feat(tax): calculation — slab walk`; push — committed as `f5cdcd3`, pushed to `origin/code`
 
 ### 3.9 — Calculation service: investment rebate
-- [ ] Step 4: per-item investment caps (PLAN.md §10.5), then `rebate = min(0.03 × taxable, 0.15 × eligible, 1,000,000)`; rebate = 0 if `taxable ≤ 0`
-- [ ] Test: rebate cap binding on each of the three legs (3%, 15%, 1M); zero-taxable case
-- [ ] Self code-review (high — money math)
-- [ ] Commit `feat(tax): calculation — investment rebate`; push
+- [x] Step 4: per-item investment caps (PLAN.md §10.5), then `rebate = min(0.03 × taxable, 0.15 × eligible, 1,000,000)`; rebate = 0 if `taxable ≤ 0` — **per-item caps made data-driven** (user decision, rule 6): added `sanchay_patra_cap` + `dps_cap` to `RuleSet` via **V3 migration** (add nullable → backfill id=1 to 500k/120k → `SET NOT NULL`) + entity fields. `eligibleInvestment(RuleSet, Investments)` caps Sanchay/DPS, sums the other 5 uncapped. `investmentRebate(...)` = `MIN(taxableFraction×taxable, eligibleFraction×eligible, rebateCap)`, returns 0 when `taxable.signum() ≤ 0`
+- [x] Test: rebate cap binding on each of the three legs (3%, 15%, 1M); zero-taxable case — 5 tests: per-item cap application (770k), 3% leg binds (§10.8 → 34,830), 15% leg binds (15,000), 1M cap binds (1,000,000), zero + negative taxable → 0. Also updated `TaxRuleEntitiesPersistenceTest`: `newRuleSet()` sets the two new NOT-NULL caps; seed test asserts them. 46/46 backend tests green; Flyway applies V1+V2+V3
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. V3 migration order correct + forward-only; dev/H2 unaffected (Flyway off, create-drop from entity); validate confirms V3 schema ↔ entity. Cumulative oracle = §10.8 regression (3.12)
+- [x] Commit `feat(tax): calculation — investment rebate`; push — committed as `44ed601`, pushed to `origin/code`
 
 ### 3.10 — Calculation service: minimum tax floor
-- [ ] Step 5: `withFloor = (taxable > 0) ? max(afterRebate, floorByLocation) : 0`
-- [ ] Test: below-floor case per location (Dhaka 5k, other-CC 4k, other 3k); zero taxable income → no floor applied
-- [ ] Self code-review (high — money math)
-- [ ] Commit `feat(tax): calculation — minimum tax floor`; push
+- [x] Step 5: `withFloor = (taxable > 0) ? max(afterRebate, floorByLocation) : 0` — `afterRebate(grossTax, rebate)` = MAX(0, gross−rebate); `applyMinimumTaxFloor(RuleSet, Location, taxableIncome, afterRebate)` → `MinimumTaxResult(taxAfterFloor, floor, applied)`: returns 0 when `taxable.signum() ≤ 0`, else MAX(afterRebate, floor) with `applied = floor > afterRebate`. Private `minimumTaxFloor(RuleSet, Location)` lookup throws `IllegalStateException` if absent (mirrors category-threshold lookup)
+- [x] Test: below-floor case per location (Dhaka 5k, other-CC 4k, other 3k); zero taxable income → no floor applied — 6 tests: afterRebate (worked-example 56,820 + clamps at 0), `@ParameterizedTest` 3 locations below-floor (bumped + applied=true), above-floor unchanged (applied=false), zero-taxable → 0. 52/52 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. Worked-example after-rebate = 56,820 confirmed; Dhaka floor not binding. `MinimumTaxResult` immutable record carries the response's floor fields. Cumulative oracle = §10.8 regression (3.12)
+- [x] Commit `feat(tax): calculation — minimum tax floor`; push — committed as `4364047`, pushed to `origin/code`
 
 ### 3.11 — Calculation service: AIT credit
-- [ ] Step 6: `netTax = max(0, withFloor − AIT)`; modeled separately from rebate
-- [ ] Test: AIT > tax → net = 0 (no refund modeled); AIT < tax → net = tax − AIT
-- [ ] Self code-review (high — money math)
-- [ ] Commit `feat(tax): calculation — AIT credit`; push
+- [x] Step 6: `netTax = max(0, withFloor − AIT)`; modeled separately from rebate — `netTax(withFloor, advanceIncomeTaxPaid)` = MAX(0, withFloor − AIT). **Also assembled the public `calculate(RuleSet, assessmentYear, TaxCalculationRequest) → TaxCalculationResponse`** threading all six steps via local finals (chose locals over an accumulator record — clearer for a single straight-line method; the `SlabWalkResult`/`MinimumTaxResult` records already bundle multi-value outputs). Response constructor order matches the record component order
+- [x] Test: AIT > tax → net = 0 (no refund modeled); AIT < tax → net = tax − AIT — 2 netTax tests + a `calculate()` assembly test on a simple hand-computed scenario (basic 900k → net 20,000, full breakdown wired, 7 slab rows). Reusable `fullRuleSet()`/`basicOnly()`/`noInvestments()` fixtures added for 3.12. Exact §10.8 → 56,820 regression is slice 3.12. 55/55 backend tests green
+- [x] Self code-review (high — money math) — high-effort three-angle; no blocking findings. calc math now complete end-to-end. Cumulative oracle = §10.8 regression (3.12, next)
+- [x] Commit `feat(tax): calculation — AIT credit`; push — committed as `61a9fd8` (incl. `calculate()` assembly), pushed to `origin/code`
 
 ### 3.12 — Worked-example regression test
-- [ ] End-to-end test exactly reproducing PLAN.md §10.8 (expected net tax = 56,820)
-- [ ] Self code-review (medium)
-- [ ] Commit `test(tax): worked-example regression`; push
+- [x] End-to-end test exactly reproducing PLAN.md §10.8 (expected net tax = 56,820) — `workedExampleFromPlanSection10_8ProducesNetTax56820` in `TaxCalculationServiceTest` feeds the exact §10.8 inputs (basic 1,611,000; Sanchay 200,000 + DPS 120,000; GENERAL; Dhaka; AIT 0) through `calculate(fullRuleSet, "2025-26", request)` and asserts the full breakdown: total 1,611,000 → exemption 450,000 → taxable 1,161,000 → gross 91,650 → eligible 320,000 → rebate 34,830 → afterRebate 56,820 → Dhaka floor 5,000 (not binding) → **netTax 56,820**, plus the per-slab rows (band0/5%/10%/15%-partial). Reuses existing fixtures; no production change. 56/56 backend tests green. Note carried to 3.13: `calculate()` reads the rule set's lazy `@OneToMany` collections, so the controller must load it with collections initialized (entity graph / transaction)
+- [x] Self code-review (medium) — test-only; encodes every §10.8 row + headline 56,820 as a permanent regression guard. No findings
+- [x] Commit `test(tax): worked-example regression`; push — committed as `bc5569e`, pushed to `origin/code`
 
 ### 3.13 — POST /api/calculators/tax/calculate
-- [ ] Controller: `POST /api/calculators/tax/calculate` — accepts `TaxCalculationRequest`, returns `TaxCalculationResponse`; resolves active `RuleSet` by AY (default to latest)
-- [ ] Test: MockMvc happy path; validation error returns 400 with global-error JSON shape
-- [ ] Self code-review (high — public API surface)
-- [ ] Commit `feat(tax): POST /api/calculators/tax/calculate`; push
+- [x] Controller: `POST /api/calculators/tax/calculate` — accepts `TaxCalculationRequest`, returns `TaxCalculationResponse`; resolves active `RuleSet` by AY (default to latest) — `TaxCalculationController` (`tax.web`) delegates to a new `TaxCalculationFacade` (`tax.service`, `@Transactional(readOnly=true)`) which resolves the AY via `AssessmentYearRepository` (`findByLabel`, or `findTopByOrderByLabelDesc` when the request omits it) and calls the pure `TaxCalculationService.calculate(...)`. The read-only transaction keeps the session open so the rule set's lazy `@OneToMany` collections initialize before the calc walks them — kept the pure service repo-free; transaction lives in the service layer, not the controller
+- [x] Test: MockMvc happy path; validation error returns 400 with global-error JSON shape — `TaxCalculationControllerTest` (`@SpringBootTest` + MockMvc + Testcontainers + Flyway, real HTTP→facade→DB→calc): worked-example POST → 200 + **netTax 56,820** + assessmentYear resolves to latest "2025-26" (proves lazy-loading works end-to-end — the open risk from 3.12); unknown AY → 404 `NOT_FOUND`; invalid (null category) → 400 `VALIDATION_ERROR` with `fieldErrors`. **Gotcha:** first named it `...IT`, which Surefire silently skips (no Failsafe configured) — renamed to `...Test` to match the project's existing Testcontainers-as-Surefire convention. 59/59 backend tests green
+- [x] Self code-review (high — public API surface) — high-effort three-angle; no blocking findings. Boot 4 package reorg again: `AutoConfigureMockMvc` is at `org.springframework.boot.webmvc.test.autoconfigure`. Follow-up (non-blocking): no Failsafe `*IT` split — all integration tests run under Surefire by `*Test` naming; could formalize later
+- [x] Commit `feat(tax): POST /api/calculators/tax/calculate`; push — committed as `dd5ed28`, pushed to `origin/code`
 
 ### 3.14 — GET /api/calculators/tax/rules/{assessmentYear}
-- [ ] Controller: returns the rule set for an AY (slabs, category thresholds, floors, caps)
-- [ ] Test: 200 with full payload for `2025-26`; 404 for unknown year
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(tax): GET /api/calculators/tax/rules/{year}`; push
+- [x] Controller: returns the rule set for an AY (slabs, category thresholds, floors, caps) — `TaxCalculationController.rules(@PathVariable)` delegates to a new `TaxCalculationFacade.getRules(label)` (`@Transactional(readOnly=true)`, reuses the existing `resolveAssessmentYear` so unknown year → `NotFoundException` → 404). New `TaxRulesResponse` DTO (record with nested `Slab`/`Threshold`/`Floor`) maps the rule set inside the tx so the lazy `@OneToMany` collections initialize. The synthesized 0% band is intentionally excluded (per-taxpayer, not stored). Thresholds/floors sorted by enum order for deterministic output; slabs already `@OrderBy ordinal`
+- [x] Test: 200 with full payload for `2025-26`; 404 for unknown year — `TaxRulesControllerTest` (`@SpringBootTest` + MockMvc + Testcontainers + Flyway): GET `/rules/2025-26` → 200, deserializes into `TaxRulesResponse` and asserts every §10 value (scalars + caps, all 6 slabs incl. null-width top, GENERAL threshold, Dhaka floor) with AssertJ `isEqualByComparingTo` (robust for `BigDecimal`); unknown year `1999-00` → 404 `NOT_FOUND`. 61/61 backend tests green via `./mvnw verify`
+- [x] Self code-review (medium) — ran `/code-review` skill (7 angles inline; diff is small + read-only, no money mutation). No correctness/security findings. One maintainability nit: user-typed wildcard imports (`tax.model.*`, `web.bind.annotation.*`) drifted from the codebase's explicit-import convention — reverted to explicit single imports per user decision; rebuilt green
+- [x] Commit `feat(tax): GET /api/calculators/tax/rules/{year}`; push
 
 ---
 

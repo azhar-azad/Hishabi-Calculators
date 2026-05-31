@@ -5,3 +5,8 @@ spring:
     active: dev
   jpa:
     open-in-view: false
+  # Flyway is OFF by defualt: dev + most boot tests run on H2, which can't
+  # execute the Postgres-speciic migration SQL. It's enabled only where
+  # Postgres is the real target (prod profile + Testcontainers integration tests).
+  flyway:
+    enabled: false
