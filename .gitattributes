@@ -1,0 +1,14 @@
+# Normalize line endings: store text as LF in the repo and check out LF on every
+# platform. Prevents CRLF working trees on Windows (Git-for-Windows defaults
+# core.autocrlf=true) from drifting against the LF-normalized repo + CI.
+* text=auto eol=lf
+
+# Explicit binary types (also auto-detected, but pinned for safety).
+*.jar binary
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.woff binary
+*.woff2 binary
