@@ -170,6 +170,8 @@ Things consciously punted from MVP. Track here so we don't lose them.
 | Multi-year historical calculation UI | Schema already supports multiple AYs; only the seed data is single-year. UI deferred until there's a second year to pick from. |
 | Mobile app | Backend kept REST-clean so any client (React Native / Flutter / native) is viable when we get there. |
 | i18n (Bengali + English) | Likely needed if shared beyond colleagues. Skip for personal-use MVP. |
+| Bruno: add `API-Collection/README.md` | One-liner: "Bruno collection — open in Bruno, point at a running backend." |
+| Bruno: rename folder `API-Collection/` → `api-collection/` | Lowercase, for consistency with `backend/` / `frontend/`. Do as a small standalone commit/PR. |
 
 ## 10. Tax Rules — AY 2025-26 (Bangladesh, individual)
 
