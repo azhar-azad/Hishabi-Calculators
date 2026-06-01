@@ -260,7 +260,7 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Linked from landing page — already in place from slice 2.4: landing's Income Tax card is `<Link href="/calculators/tax">`; the route now exists so the link no longer 404s
 - [x] Test: page renders header; landing link navigates — `__tests__/TaxCalculatorPage.test.tsx` asserts the h1 via partial regex `/Bangladeshi Income Tax/i` + `2025-26` substring (robust to em-dash vs hyphen). "Landing link navigates" covered by the existing `Home.test` href assertion (real nav is e2e, out of scope). 10/10 frontend tests pass; `npm run check` green; build OK
 - [x] Self code-review (medium) — no findings
-- [ ] Commit `feat(frontend-tax): tax page skeleton`; push
+- [x] Commit `feat(frontend-tax): tax page skeleton`; push — committed as `74e7338`, pushed to `origin/code`
 
 ### 4.2 — Fetch + render rules
 - [ ] On mount, call `GET /api/calculators/tax/rules/2025-26`; render slab table + category list (for confidence, not interactive yet)
