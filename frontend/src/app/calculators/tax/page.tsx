@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { TaxRulesView } from '@/features/tax/TaxRulesView';
 
 export const metadata: Metadata = {
   title: 'Bangladeshi Income Tax - AY 2025-26',
@@ -15,6 +16,7 @@ export default function TaxCalculatorPage() {
           Estimate your individual income tax. Rules and form coming next.
         </p>
       </header>
+      <TaxRulesView />
     </main>
   );
 }

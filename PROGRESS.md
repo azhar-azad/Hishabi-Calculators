@@ -263,11 +263,11 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(frontend-tax): tax page skeleton`; push — committed as `74e7338`, pushed to `origin/code`
 
 ### 4.2 — Fetch + render rules
-- [ ] On mount, call `GET /api/calculators/tax/rules/2025-26`; render slab table + category list (for confidence, not interactive yet)
-- [ ] Loading + error states
-- [ ] Test: mocked API → renders slab rows
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend-tax): render rules from backend`; push
+- [x] On mount, call `GET /api/calculators/tax/rules/2025-26`; render slab table + category list (for confidence, not interactive yet) — new `features/tax/TaxRulesView.tsx` (`'use client'`) calls `apiGet<TaxRulesResponse>` from `lib/api.ts` (slice 2.6) via `useEffect`/`useCallback`; `features/tax/types.ts` mirrors the backend DTO. `app/calculators/tax/page.tsx` stays a server component (owns the page `metadata` export — Next 16 forbids `'use client'` from exporting metadata) and renders `<TaxRulesView />` as a client child. Slabs rendered as a 3-col table (#, width, rate); null-width top slab shows "Remaining". Category thresholds rendered as a flex list. AY hardcoded to `2025-26` for now; becomes a prop when a year picker lands
+- [x] Loading + error states — discriminated-union `ViewState = loading | ok | error` mirroring the `/dev/health` probe pattern. `aria-live="polite"` + `aria-busy` on the section; error path shows backend message + Retry button that re-invokes the fetcher
+- [x] Test: mocked API → renders slab rows — `__tests__/TaxRulesView.test.tsx` stubs global `fetch` (`vi.stubGlobal` + `unstubAllGlobals` in `afterEach`), asserts initial "Loading…" then 6 slab rows + the "Remaining" / "30%" / "GENERAL" sentinels after the promise resolves; second test exercises the error path with a 500 response. `__tests__/TaxCalculatorPage.test.tsx` updated to stub fetch so the now-fetching child doesn't blow up the page test. **12/12 frontend tests green** (2 new + 10 prior) via `npm run check` (lint, format, type-check, test). Caught a stray duplicate `src/features/tax/page.tsx` (outside the `app/` tree → not a route, dead code); removed before commit
+- [x] Self code-review (medium) — 7-angle inline review on the ~85-line diff. No actionable findings. Two PLAUSIBLE non-blockers (hardcoded AY → becomes prop later; no `AbortController` on unmount → matches `/dev/health` precedent, dev-only warning at worst)
+- [x] Commit `feat(frontend-tax): render rules from backend`; push
 
 ### 4.3 — Input form (no submit yet)
 - [ ] Form: income components, category dropdown, location dropdown, disabled-child count, investments (per type), AIT
