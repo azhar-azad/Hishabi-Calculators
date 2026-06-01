@@ -1,0 +1,46 @@
+info:
+  name: Calculate Tax
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:8080/api/calculators/tax/calculate
+  body:
+    type: json
+    data: |-
+      {
+        "assessmentYear": "2025-26",
+        "category": "GENERAL",
+        "location": "DHAKA_CHITTAGONG_CITY_CORP",
+        "disabledChildren": 0,
+        "income": {
+          "basic": 1611000,
+          "houseRent": 0,
+          "conveyance": 0,
+          "medicalAllowance": 0,
+          "leaveEncashment": 0,
+          "performanceBonus": 0,
+          "yearlyBonus": 0,
+          "festivalBonus": 0,
+          "overtime": 0,
+          "transportation": 0
+        },
+        "investments": {
+          "sanchayPatra": 200000,
+          "dps": 120000,
+          "mutualFund": 0,
+          "treasuryBond": 0,
+          "providentFundEmployee": 0,
+          "providentFundEmployer": 0,
+          "stock": 0
+        },
+        "advanceIncomeTaxPaid": 0
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
