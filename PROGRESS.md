@@ -256,10 +256,10 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 ## Phase 4 — Tax calculator: frontend
 
 ### 4.1 — Route + empty page skeleton
-- [ ] `app/calculators/tax/page.tsx` with header "Bangladeshi Income Tax — AY 2025-26"
-- [ ] Linked from landing page
-- [ ] Test: page renders header; landing link navigates
-- [ ] Self code-review (medium)
+- [x] `app/calculators/tax/page.tsx` with header "Bangladeshi Income Tax — AY 2025-26" — static server component + page-level `metadata` title (Next 16 static-metadata export, confirmed unchanged via node_modules docs). Placeholder subtitle ("Rules and form coming next"). Route prerenders as `○ (Static)`
+- [x] Linked from landing page — already in place from slice 2.4: landing's Income Tax card is `<Link href="/calculators/tax">`; the route now exists so the link no longer 404s
+- [x] Test: page renders header; landing link navigates — `__tests__/TaxCalculatorPage.test.tsx` asserts the h1 via partial regex `/Bangladeshi Income Tax/i` + `2025-26` substring (robust to em-dash vs hyphen). "Landing link navigates" covered by the existing `Home.test` href assertion (real nav is e2e, out of scope). 10/10 frontend tests pass; `npm run check` green; build OK
+- [x] Self code-review (medium) — no findings
 - [ ] Commit `feat(frontend-tax): tax page skeleton`; push
 
 ### 4.2 — Fetch + render rules
