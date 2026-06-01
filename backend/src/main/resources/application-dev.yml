@@ -6,10 +6,16 @@ spring:
     password: ""
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      # Flyway owns the schema (below): Hibernate only validates entities against it.
+      # Must NOT be create-drop, or Hibernate would drop Flyway's tables and wipe the seed.
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  # Run the same V1-V3 migrations as prod on H2 (PostgreSQL mode), so dev is seeded with the
+  # tax rules and mirrors prod's data path - single source of truth, no separate dev seed.
+  flyway:
+    enabled: true
 
 app:
   cors:
