@@ -42,6 +42,8 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | DB migration tool        | Flyway (plain-SQL, forward-only)          | 2026-05-29 |
 | Monetary rounding        | 2 dp (paisa), HALF_UP, centralized        | 2026-05-29 |
 | Dev DB seeding           | Flyway runs on H2 (PG mode); `ddl-auto: validate` — supersedes "Flyway off on H2" | 2026-06-01 |
+| Frontend form stack      | react-hook-form + zod (+ shadcn Input/Select/Label/Card) | 2026-06-02 |
+| Calc service structure   | Step methods (pure functions, local finals) — not Chain-of-Responsibility. CoR is a poor fit for fixed-order money math; typed returns are clearer than a mutable shared context. Revisit only if wealth surcharge adds year-varying steps. | 2026-05-30 |
 
 Add a new row whenever a decision is made or changed.
 
@@ -170,6 +172,14 @@ Things consciously punted from MVP. Track here so we don't lose them.
 | Multi-year historical calculation UI | Schema already supports multiple AYs; only the seed data is single-year. UI deferred until there's a second year to pick from. |
 | Mobile app | Backend kept REST-clean so any client (React Native / Flutter / native) is viable when we get there. |
 | i18n (Bengali + English) | Likely needed if shared beyond colleagues. Skip for personal-use MVP. |
+| Bruno: add `API-Collection/README.md` | One-liner: "Bruno collection — open in Bruno, point at a running backend." |
+| Bruno: rename folder `API-Collection/` → `api-collection/` | Lowercase, for consistency with `backend/` / `frontend/`. Do as a small standalone commit/PR. |
+| **Tech debt — `TaxBreakdown.rebateLegLabel` hardcodes AY 2025-26 constants** | `rebateLegLabel` in `TaxBreakdown.tsx` hardcodes 0.03, 0.15, and 1,000,000. When AY 2026-27 arrives with different fractions/cap, it will silently mislabel the binding leg. Fix: pass `TaxRulesResponse` rebate fields as props to `TaxBreakdown`, or add `bindingRebateLeg` field to the backend `TaxCalculationResponse`. |
+| **Tech debt — `pct` and `fmt` helpers duplicated** | `TaxBreakdown.tsx` and `TaxRulesView.tsx` each define their own `pct()` (and effectively `fmt()`). Extract to `features/tax/formatters.ts` when a third component needs them. |
+| **Tech debt — no `AbortController` on unmount in `TaxRulesView`** | The `useEffect` fetch in `TaxRulesView.tsx` has no abort signal. Harmless in practice (the component rarely unmounts mid-fetch), but will trigger a React dev-mode warning if it does. Low priority. |
+| **Tech debt — `/dev/health` page has no prod guard** | `app/dev/health/page.tsx` renders in production. Add a `NODE_ENV !== 'production'` early return (or remove the page) before Phase 6 deploy. |
+| **Tech debt — `vite-tsconfig-paths` deprecation** | Vite 7 has native `resolve.tsconfigPaths: true`; `vite-tsconfig-paths` prints a deprecation warning on every test run. Replace in `vitest.config.mts` when convenient. |
+| **Display polish — `TaxRulesView` shows raw enum keys** | Category thresholds list renders `GENERAL`, `SENIOR_65_PLUS` etc. instead of human-readable labels. The form dropdowns already have label maps — extract to a shared `features/tax/labels.ts` and reuse in both places. |
 
 ## 10. Tax Rules — AY 2025-26 (Bangladesh, individual)
 
