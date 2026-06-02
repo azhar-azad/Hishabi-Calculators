@@ -270,10 +270,10 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(frontend-tax): render rules from backend`; push
 
 ### 4.3 — Input form (no submit yet)
-- [ ] Form: income components, category dropdown, location dropdown, disabled-child count, investments (per type), AIT
-- [ ] Use UI library form components
-- [ ] Test: renders all fields; default values reasonable
-- [ ] Self code-review (medium)
+- [x] Form: income components, category dropdown, location dropdown, disabled-child count, investments (per type), AIT — `features/tax/TaxCalculatorForm.tsx` (`'use client'`). react-hook-form `useForm<TaxFormValues>` with sensible `defaultValues` (all amounts 0, category GENERAL, location DHAKA_CHITTAGONG_CITY_CORP). 19 number fields (10 income + 7 investments + disabledChildren + AIT) via `register(name, { valueAsNumber: true })`, rendered DRY from typed `NumberField[]` arrays. 2 dropdowns (category, location) via `Controller` + shadcn `Select` (base-ui: `value`/`onValueChange`). No submit logic yet — `onSubmit` is a stub wired in 4.5. Wired into the route page above `TaxRulesView`
+- [x] Use UI library form components — scaffolded shadcn `input`, `label`, `select`, `card` (only `button` existed before); installed `react-hook-form@7`, `zod@4`, `@hookform/resolvers@5` (recorded in PLAN §2). Note: shadcn `add form` (the RHF wrapper) wouldn't scaffold in 4.10, so RHF is used directly with the primitives — `register` is leaner than the `FormField` render-prop for 19 simple fields anyway
+- [x] Test: renders all fields; default values reasonable — `__tests__/TaxCalculatorForm.test.tsx` asserts representative number fields default to "0", both dropdowns + first/last income+investment fields render, and the Calculate button exists. base-ui `Select` renders fine in jsdom (never opened → no ResizeObserver polyfill needed). 13/13 frontend tests green. **Caught a misfile:** File-2's page edit was typed into a stray `features/tax/page.tsx` (not a route — `features/` isn't under `app/`) while the real `app/calculators/tax/page.tsx` went unedited; deleted the stray, applied the edit to the real route, and **strengthened `TaxCalculatorPage.test.tsx` to assert the Calculate button** so a future misfile is caught
+- [x] Self code-review (medium) — no findings beyond the misfile (fixed). Build keeps `/calculators/tax` static (form is a client island)
 - [ ] Commit `feat(frontend-tax): input form structure`; push
 
 ### 4.4 — Client-side validation

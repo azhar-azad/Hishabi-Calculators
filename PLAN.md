@@ -42,6 +42,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | DB migration tool        | Flyway (plain-SQL, forward-only)          | 2026-05-29 |
 | Monetary rounding        | 2 dp (paisa), HALF_UP, centralized        | 2026-05-29 |
 | Dev DB seeding           | Flyway runs on H2 (PG mode); `ddl-auto: validate` — supersedes "Flyway off on H2" | 2026-06-01 |
+| Frontend form stack      | react-hook-form + zod (+ shadcn Input/Select/Label/Card) | 2026-06-02 |
 
 Add a new row whenever a decision is made or changed.
 

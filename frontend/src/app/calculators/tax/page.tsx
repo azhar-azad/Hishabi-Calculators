@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { TaxCalculatorForm } from '@/features/tax/TaxCalculatorForm';
 import { TaxRulesView } from '@/features/tax/TaxRulesView';
 
 export const metadata: Metadata = {
@@ -13,9 +14,10 @@ export default function TaxCalculatorPage() {
           Bangladeshi Income Tax - AY 2025-26
         </h1>
         <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-          Estimate your individual income tax. Rules and form coming next.
+          Estimate your individual income tax.
         </p>
       </header>
+      <TaxCalculatorForm />
       <TaxRulesView />
     </main>
   );

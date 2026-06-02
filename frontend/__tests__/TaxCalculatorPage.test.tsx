@@ -30,5 +30,7 @@ describe('Tax calculator page', () => {
     });
     expect(heading).toBeDefined();
     expect(heading.textContent).toContain('2025-26');
+    // the form is wired into the page
+    expect(screen.getByRole('button', { name: /Calculate/i })).toBeDefined();
   });
 });
