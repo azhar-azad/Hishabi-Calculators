@@ -179,6 +179,7 @@ Things consciously punted from MVP. Track here so we don't lose them.
 | **Tech debt — no `AbortController` on unmount in `TaxRulesView`** | The `useEffect` fetch in `TaxRulesView.tsx` has no abort signal. Harmless in practice (the component rarely unmounts mid-fetch), but will trigger a React dev-mode warning if it does. Low priority. |
 | **Tech debt — `/dev/health` page has no prod guard** | `app/dev/health/page.tsx` renders in production. Add a `NODE_ENV !== 'production'` early return (or remove the page) before Phase 6 deploy. |
 | **Tech debt — `vite-tsconfig-paths` deprecation** | Vite 7 has native `resolve.tsconfigPaths: true`; `vite-tsconfig-paths` prints a deprecation warning on every test run. Replace in `vitest.config.mts` when convenient. |
+| **Display polish — `TaxRulesView` shows raw enum keys** | Category thresholds list renders `GENERAL`, `SENIOR_65_PLUS` etc. instead of human-readable labels. The form dropdowns already have label maps — extract to a shared `features/tax/labels.ts` and reuse in both places. |
 
 ## 10. Tax Rules — AY 2025-26 (Bangladesh, individual)
 
