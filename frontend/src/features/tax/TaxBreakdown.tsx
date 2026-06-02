@@ -31,7 +31,7 @@ function Row({
     <div
       className={`flex justify-between gap-4 py-1.5 text-sm${bold ? ' font-semibold' : ''}`}
     >
-      <span>{label}</span>
+      <span className="min-w-0">{label}</span>
       <span className="shrink-0 tabular-nums">{value}</span>
     </div>
   );

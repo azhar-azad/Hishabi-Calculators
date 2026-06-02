@@ -72,30 +72,32 @@ export function TaxRulesView() {
         <div className="flex flex-col gap-8">
           <div>
             <h2 className="mb-3 text-xl font-semibold">Tax slabs</h2>
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b border-zinc-300 dark:border-zinc-700">
-                  <th className="py-2 pr-4 font-medium">#</th>
-                  <th className="py-2 pr-4 font-medium">Slab width (BDT)</th>
-                  <th className="py-2 font-medium">Rate</th>
-                </tr>
-              </thead>
-              <tbody>
-                {state.rules.slabs.map((slab) => (
-                  <tr
-                    key={slab.ordinal}
-                    data-testid="slab-row"
-                    className="border-b border-zinc-100 dark:border-zinc-800"
-                  >
-                    <td className="py-2 pr-4">{slab.ordinal}</td>
-                    <td className="py-2 pr-4">
-                      {slab.width === null ? 'Remaining' : bdt(slab.width)}
-                    </td>
-                    <td className="py-2">{pct(slab.rate)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b border-zinc-300 dark:border-zinc-700">
+                    <th className="py-2 pr-4 font-medium">#</th>
+                    <th className="py-2 pr-4 font-medium">Slab width (BDT)</th>
+                    <th className="py-2 font-medium">Rate</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.rules.slabs.map((slab) => (
+                    <tr
+                      key={slab.ordinal}
+                      data-testid="slab-row"
+                      className="border-b border-zinc-100 dark:border-zinc-800"
+                    >
+                      <td className="py-2 pr-4">{slab.ordinal}</td>
+                      <td className="py-2 pr-4">
+                        {slab.width === null ? 'Remaining' : bdt(slab.width)}
+                      </td>
+                      <td className="py-2">{pct(slab.rate)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div>
