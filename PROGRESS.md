@@ -65,10 +65,10 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(frontend-tax): render calculation breakdown`; push
 
 ### 4.7 — Mobile-responsive polish
-- [ ] Layout works on mobile widths (form stacks, tables scroll)
-- [ ] Manual verify in browser at 375px / 768px / desktop
-- [ ] Self code-review (medium)
-- [ ] Commit `style(frontend-tax): responsive layout`; push
+- [x] Layout works on mobile widths (form stacks, tables scroll) — `p-4 sm:p-8` on page, `overflow-x-auto` wrapping slab table, `min-w-0` on breakdown Row label span. Form grids already stacked correctly from slice 4.3 (`sm:grid-cols-2`). Also fixed a regression in this slice: missing leading space in `Row` className template literal was producing `text-smfont-semibold` (invalid), silently dropping bold weight from all summary rows.
+- [x] Manual verify in browser at 375px / 768px / desktop — all three viewports confirmed via dev-server preview screenshots
+- [x] Self code-review (medium) — 7-angle review, 1 confirmed bug (space regression, fixed), 1 non-blocking cleanup (use `cn()` for Row className — deferred). No other findings.
+- [x] Commit `style(frontend-tax): responsive layout polish (Slice 4.7)`; push — committed as `2760266`, pushed to `origin/code`
 
 ---
 
