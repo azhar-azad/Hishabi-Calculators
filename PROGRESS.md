@@ -277,9 +277,9 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(frontend-tax): input form structure`; push — committed as `ad4622b`, pushed to `origin/code`
 
 ### 4.4 — Client-side validation
-- [ ] Validate: required fields, non-negative numbers; surface inline errors
-- [ ] Test: invalid input shows error; valid input clears error
-- [ ] Self code-review (medium)
+- [x] Validate: required fields, non-negative numbers; surface inline errors — new `features/tax/schema.ts`: zod (v4) `taxFormSchema` — every amount `z.number().min(0)` (empty inputs arrive as `NaN` via `valueAsNumber`, which `z.number()` rejects → doubles as the "required" check), `disabledChildren` int `≥ 0`, category/location `z.enum(...)`. `TaxFormValues` is now `z.infer<typeof taxFormSchema>` (single source for form shape + validation). Form wired with `zodResolver` + `mode: 'onTouched'` (validate on blur, revalidate on change); inline error `<p>` under each number field via an `errorAt(errors, dottedPath)` walker; `aria-invalid` on errored inputs; `noValidate` on the `<form>` so RHF/zod own validation. zod 4 note: error param is `{ error: '...' }` (not `message`)
+- [x] Test: invalid input shows error; valid input clears error — 2 new tests in `TaxCalculatorForm.test.tsx` (`fireEvent` + `findByText`/`waitFor`): negative Basic → "Basic cannot be negative" then clears when corrected; emptied AIT → "Advance Income Tax is required". 15/15 frontend tests green; build keeps `/calculators/tax` static
+- [x] Self code-review (medium) — no findings; schema mirrors backend Bean Validation
 - [ ] Commit `feat(frontend-tax): client-side validation`; push
 
 ### 4.5 — Submit + API call

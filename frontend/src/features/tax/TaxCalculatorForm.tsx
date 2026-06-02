@@ -1,6 +1,12 @@
 'use client';
 
-import { Controller, useForm, type FieldPath } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Controller,
+  useForm,
+  type FieldErrors,
+  type FieldPath,
+} from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,36 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { taxFormSchema, type TaxFormValues } from '@/features/tax/schema';
 
-export type TaxFormValues = {
-  category: string;
-  location: string;
-  disabledChildren: number;
-  income: {
-    basic: number;
-    houseRent: number;
-    conveyance: number;
-    medicalAllowance: number;
-    leaveEncashment: number;
-    performanceBonus: number;
-    yearlyBonus: number;
-    festivalBonus: number;
-    overtime: number;
-    transportation: number;
-  };
-  investments: {
-    sanchayPatra: number;
-    dps: number;
-    mutualFund: number;
-    treasuryBond: number;
-    providentFundEmployee: number;
-    providentFundEmployer: number;
-    stock: number;
-  };
-  advanceIncomeTaxPaid: number;
+type NumberField = {
+  name: FieldPath<TaxFormValues>;
+  label: string;
+  step?: string;
 };
-
-type NumberField = { name: FieldPath<TaxFormValues>; label: string };
 
 const INCOME_FIELDS: NumberField[] = [
   { name: 'income.basic', label: 'Basic' },
@@ -121,32 +104,62 @@ const DEFAULT_VALUES: TaxFormValues = {
   advanceIncomeTaxPaid: 0,
 };
 
+// Read a nested error message by dotted field path (e.g. "income.basic").
+function errorAt(
+  errors: FieldErrors<TaxFormValues>,
+  name: FieldPath<TaxFormValues>,
+): string | undefined {
+  let cur: unknown = errors;
+  for (const part of name.split('.')) {
+    if (cur && typeof cur === 'object') {
+      cur = (cur as Record<string, unknown>)[part];
+    } else {
+      return undefined;
+    }
+  }
+  const message = (cur as { message?: unknown } | undefined)?.message;
+  return typeof message === 'string' ? message : undefined;
+}
+
 export function TaxCalculatorForm() {
-  const { register, handleSubmit, control } = useForm<TaxFormValues>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<TaxFormValues>({
+    resolver: zodResolver(taxFormSchema),
     defaultValues: DEFAULT_VALUES,
+    mode: 'onTouched',
   });
 
   const onSubmit = () => {
     // Wired to POST /api/calculators/tax/calculate in slice 4.5.
   };
 
-  const numberField = ({ name, label }: NumberField) => (
-    <div key={name} className="flex flex-col gap-1">
-      <Label htmlFor={name}>{label}</Label>
-      <Input
-        id={name}
-        type="number"
-        step="any"
-        min={0}
-        {...register(name, { valueAsNumber: true })}
-      />
-    </div>
-  );
+  const numberField = ({ name, label, step }: NumberField) => {
+    const message = errorAt(errors, name);
+    return (
+      <div key={name} className="flex flex-col gap-1">
+        <Label htmlFor={name}>{label}</Label>
+        <Input
+          id={name}
+          type="number"
+          step={step ?? 'any'}
+          min={0}
+          aria-invalid={message ? true : undefined}
+          {...register(name, { valueAsNumber: true })}
+        />
+        {message && <p className="text-destructive text-sm">{message}</p>}
+      </div>
+    );
+  };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="flex w-full max-w-3xl flex-col gap-6"
+      noValidate
     >
       <Card>
         <CardHeader>
@@ -221,31 +234,15 @@ export function TaxCalculatorForm() {
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="disabledChildren">
-              Number of disabled children
-            </Label>
-            <Input
-              id="disabledChildren"
-              type="number"
-              step="1"
-              min={0}
-              {...register('disabledChildren', { valueAsNumber: true })}
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="advanceIncomeTaxPaid">
-              Advance Income Tax already paid (AIT)
-            </Label>
-            <Input
-              id="advanceIncomeTaxPaid"
-              type="number"
-              step="any"
-              min={0}
-              {...register('advanceIncomeTaxPaid', { valueAsNumber: true })}
-            />
-          </div>
+          {numberField({
+            name: 'disabledChildren',
+            label: 'Number of disabled children',
+            step: '1',
+          })}
+          {numberField({
+            name: 'advanceIncomeTaxPaid',
+            label: 'Advance Income Tax already paid (AIT)',
+          })}
         </CardContent>
       </Card>
 
