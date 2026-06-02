@@ -274,7 +274,7 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Use UI library form components — scaffolded shadcn `input`, `label`, `select`, `card` (only `button` existed before); installed `react-hook-form@7`, `zod@4`, `@hookform/resolvers@5` (recorded in PLAN §2). Note: shadcn `add form` (the RHF wrapper) wouldn't scaffold in 4.10, so RHF is used directly with the primitives — `register` is leaner than the `FormField` render-prop for 19 simple fields anyway
 - [x] Test: renders all fields; default values reasonable — `__tests__/TaxCalculatorForm.test.tsx` asserts representative number fields default to "0", both dropdowns + first/last income+investment fields render, and the Calculate button exists. base-ui `Select` renders fine in jsdom (never opened → no ResizeObserver polyfill needed). 13/13 frontend tests green. **Caught a misfile:** File-2's page edit was typed into a stray `features/tax/page.tsx` (not a route — `features/` isn't under `app/`) while the real `app/calculators/tax/page.tsx` went unedited; deleted the stray, applied the edit to the real route, and **strengthened `TaxCalculatorPage.test.tsx` to assert the Calculate button** so a future misfile is caught
 - [x] Self code-review (medium) — no findings beyond the misfile (fixed). Build keeps `/calculators/tax` static (form is a client island)
-- [ ] Commit `feat(frontend-tax): input form structure`; push
+- [x] Commit `feat(frontend-tax): input form structure`; push — committed as `ad4622b`, pushed to `origin/code`
 
 ### 4.4 — Client-side validation
 - [ ] Validate: required fields, non-negative numbers; surface inline errors
