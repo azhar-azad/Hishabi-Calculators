@@ -289,10 +289,10 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Commit `feat(frontend-tax): submit + calculate API call`; push — committed as `8882b0a`, pushed to `origin/code`
 
 ### 4.6 — Render breakdown
-- [ ] Display: taxable income, slab-by-slab tax rows, gross tax, rebate (with which leg bound), after-rebate, minimum-tax bump (if applied), AIT credit, **net tax**
-- [ ] Test: snapshot/structure test for the worked-example response (PLAN.md §10.8)
-- [ ] Self code-review (high — user-facing correctness)
-- [ ] Commit `feat(frontend-tax): render calculation breakdown`; push
+- [x] Display: taxable income, slab-by-slab tax rows, gross tax, rebate (with which leg bound), after-rebate, minimum-tax bump (if applied), AIT credit, **net tax** — new `features/tax/TaxBreakdown.tsx`; card with 4 section dividers. Slab filter hides zero-amount slabs; `ordinal + 1` gives correct 1-indexed display (ordinal 0 = zero-rate band, confirmed by backend). Rebate binding leg inferred client-side via `rebateLegLabel` reduce (hardcoded 3%/15%/1M for AY 2025-26 — flagged in review as plausible future risk when second year lands). `TaxCalculatorForm` swaps the minimal result panel for `<TaxBreakdown result={result} />`
+- [x] Test: structure test for the worked-example response (PLAN.md §10.8) — `WORKED_EXAMPLE` fixture in `TaxCalculatorForm.test.tsx` mirrors the exact §10.8 numbers; updated success mock to use full response (partial mock would crash `slabs.filter`); new test asserts taxable income, slab rows (2/3/4), gross tax, rebate label "3% of taxable income", "not binding" floor, two occurrences of "56,820 BDT". **18/18 tests green**
+- [x] Self code-review (high — user-facing correctness) — 7-angle review. 3 PLAUSIBLE findings, none blocking: (1) hardcoded 0.03/0.15/1M in `rebateLegLabel` will mislabel binding leg for future AYs — fix by passing rules props when second year added; (2) `pct` diverges from `TaxRulesView.pct` (Math.round vs toLocaleString) — harmless for whole-% rates; (3) `fmt`/`bdt` duplicated across components. No correctness bugs for AY 2025-26
+- [x] Commit `feat(frontend-tax): render calculation breakdown`; push
 
 ### 4.7 — Mobile-responsive polish
 - [ ] Layout works on mobile widths (form stacks, tables scroll)

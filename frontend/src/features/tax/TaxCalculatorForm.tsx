@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { taxFormSchema, type TaxFormValues } from '@/features/tax/schema';
+import { TaxBreakdown } from '@/features/tax/TaxBreakdown';
 
 type NumberField = {
   name: FieldPath<TaxFormValues>;
@@ -290,17 +291,7 @@ export function TaxCalculatorForm() {
         </p>
       )}
 
-      {result && (
-        <section
-          aria-live="polite"
-          data-testid="tax-result"
-          className="rounded-md border border-zinc-200 p-4 dark:border-zinc-800"
-        >
-          <p className="text-lg font-semibold">
-            Net tax: {result.netTax.toLocaleString('en-US')} BDT
-          </p>
-        </section>
-      )}
+      {result && <TaxBreakdown result={result} />}
     </form>
   );
 }
