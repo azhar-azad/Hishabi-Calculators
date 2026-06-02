@@ -29,3 +29,28 @@ export type TaxRulesResponse = {
   categoryThresholds: CategoryThreshold[];
   minimumTaxFloors: MinimumTaxFloor[];
 };
+
+export type SlabTax = {
+  ordinal: number;
+  rate: number;
+  taxableAmountInSlab: number;
+  tax: number;
+};
+
+export type TaxCalculationResponse = {
+  assessmentYear: string;
+  totalEarnings: number;
+  taxFreeSalaryExemption: number;
+  taxableIncome: number;
+  effectiveFirstSlabThreshold: number;
+  slabs: SlabTax[];
+  grossTax: number;
+  eligibleInvestment: number;
+  rebate: number;
+  afterRebate: number;
+  minimumTaxFloor: number;
+  minimumTaxApplied: boolean;
+  taxAfterFloor: number;
+  advanceIncomeTaxPaid: number;
+  netTax: number;
+};

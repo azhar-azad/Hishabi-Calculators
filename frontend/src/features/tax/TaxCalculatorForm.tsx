@@ -1,5 +1,8 @@
 'use client';
 
+import { useState } from 'react';
+import { ApiError, apiPost } from '@/lib/api';
+import type { TaxCalculationResponse } from '@/features/tax/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Controller,
@@ -76,6 +79,8 @@ const LOCATION_OPTIONS = [
   { value: 'OTHER', label: 'Other (municipality / rural)' },
 ];
 
+const ASSESSMENT_YEAR = '2025-26';
+
 const DEFAULT_VALUES: TaxFormValues = {
   category: 'GENERAL',
   location: 'DHAKA_CHITTAGONG_CITY_CORP',
@@ -121,6 +126,18 @@ function errorAt(
   return typeof message === 'string' ? message : undefined;
 }
 
+function serverErrorMessage(e: unknown): string {
+  if (e instanceof ApiError) {
+    const body = e.body;
+    if (body && typeof body === 'object' && 'message' in body) {
+      const m = (body as { message?: unknown }).message;
+      if (typeof m === 'string') return m;
+    }
+    return `Request failed (HTTP ${e.status})`;
+  }
+  return 'Could not reach the server. Is the backend running?';
+}
+
 export function TaxCalculatorForm() {
   const {
     register,
@@ -133,8 +150,25 @@ export function TaxCalculatorForm() {
     mode: 'onTouched',
   });
 
-  const onSubmit = () => {
-    // Wired to POST /api/calculators/tax/calculate in slice 4.5.
+  const [submitting, setSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [result, setResult] = useState<TaxCalculationResponse | null>(null);
+
+  const onSubmit = async (values: TaxFormValues) => {
+    setSubmitting(true);
+    setServerError(null);
+    try {
+      const response = await apiPost<TaxCalculationResponse>(
+        '/api/calculators/tax/calculate',
+        { assessmentYear: ASSESSMENT_YEAR, ...values },
+      );
+      setResult(response);
+    } catch (e) {
+      setResult(null);
+      setServerError(serverErrorMessage(e));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const numberField = ({ name, label, step }: NumberField) => {
@@ -246,9 +280,27 @@ export function TaxCalculatorForm() {
         </CardContent>
       </Card>
 
-      <Button type="submit" className="self-start">
-        Calculate
+      <Button type="submit" className="self-start" disabled={submitting}>
+        {submitting ? 'Calculating…' : 'Calculate'}
       </Button>
+
+      {serverError && (
+        <p role="alert" className="text-destructive text-sm">
+          {serverError}
+        </p>
+      )}
+
+      {result && (
+        <section
+          aria-live="polite"
+          data-testid="tax-result"
+          className="rounded-md border border-zinc-200 p-4 dark:border-zinc-800"
+        >
+          <p className="text-lg font-semibold">
+            Net tax: {result.netTax.toLocaleString('en-US')} BDT
+          </p>
+        </section>
+      )}
     </form>
   );
 }

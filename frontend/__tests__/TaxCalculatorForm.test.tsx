@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TaxCalculatorForm } from '@/features/tax/TaxCalculatorForm';
 
@@ -57,5 +57,46 @@ describe('Tax calculator form', () => {
     expect(
       await screen.findByText(/Advance Income Tax is required/i),
     ).toBeDefined();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('submits and shows the net tax on success', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ netTax: 56820 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TaxCalculatorForm />);
+    fireEvent.click(screen.getByRole('button', { name: /Calculate/i }));
+
+    expect(await screen.findByText(/56,820/)).toBeDefined();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/calculators/tax/calculate'),
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
+
+  it('surfaces a server error on failure', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ message: 'Unknown assessment year: 2025-26' }),
+          { status: 404 },
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TaxCalculatorForm />);
+    fireEvent.click(screen.getByRole('button', { name: /Calculate/i }));
+
+    expect(await screen.findByRole('alert')).toBeDefined();
+    expect(await screen.findByText(/Unknown assessment year/i)).toBeDefined();
   });
 });
