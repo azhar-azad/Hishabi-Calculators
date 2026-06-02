@@ -99,7 +99,9 @@ describe('Tax calculator form', () => {
     render(<TaxCalculatorForm />);
     fireEvent.click(screen.getByRole('button', { name: /Calculate/i }));
 
-    expect((await screen.findAllByText(/56,820/)).length).toBeGreaterThanOrEqual(1);
+    expect(
+      (await screen.findAllByText(/56,820/)).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/calculators/tax/calculate'),
       expect.objectContaining({ method: 'POST' }),

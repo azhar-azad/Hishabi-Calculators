@@ -19,17 +19,17 @@ function rebateLegLabel(r: TaxCalculationResponse): string {
 }
 
 function Row({
-               label,
-               value,
-               bold,
-             }: {
+  label,
+  value,
+  bold,
+}: {
   label: string;
   value: string;
   bold?: boolean;
 }) {
   return (
     <div
-      className={`flex justify-between gap-4 py-1.5 text-sm${bold ? ' font-semibold' : ''}`}
+      className={`flex justify-between gap-4 py-1.5 text-sm${bold ? 'font-semibold' : ''}`}
     >
       <span className="min-w-0">{label}</span>
       <span className="shrink-0 tabular-nums">{value}</span>
@@ -76,11 +76,7 @@ export function TaxBreakdown({ result }: Props) {
                 value={`${fmt(slab.tax)} BDT`}
               />
             ))}
-          <Row
-            label="Gross tax"
-            value={`${fmt(result.grossTax)} BDT`}
-            bold
-          />
+          <Row label="Gross tax" value={`${fmt(result.grossTax)} BDT`} bold />
         </div>
 
         <div className="border-b border-zinc-200 pb-3 dark:border-zinc-700">
@@ -113,11 +109,7 @@ export function TaxBreakdown({ result }: Props) {
               value={`(${fmt(result.advanceIncomeTaxPaid)}) BDT`}
             />
           )}
-          <Row
-            label="Net tax"
-            value={`${fmt(result.netTax)} BDT`}
-            bold
-          />
+          <Row label="Net tax" value={`${fmt(result.netTax)} BDT`} bold />
         </div>
       </CardContent>
     </Card>
