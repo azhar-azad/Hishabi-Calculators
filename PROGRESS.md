@@ -40,10 +40,15 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(auth): signup endpoint`; push
 
 ### 5.3 — Login endpoint + JWT issuance
-- [ ] `POST /api/auth/login` — validates credentials, issues JWT (HS256, configurable secret + expiry)
-- [ ] Test: happy path returns token; wrong password → 401
-- [ ] Self code-review (high — auth)
-- [ ] Commit `feat(auth): login + JWT issuance`; push
+- [x] `POST /api/auth/login` — validates credentials, issues JWT (HS256, configurable secret + expiry)
+- [x] Test: happy path returns token; wrong password → 401
+- [x] Self code-review (high — auth)
+- [x] Commit `feat(auth): login + JWT issuance`; push
+
+> **Known gap:** Issued tokens are not invalidated on password change or account deletion (no revocation
+> mechanism). Any future account-mutation endpoint must revisit this — either shorten token TTL +
+> add refresh tokens, or introduce a lightweight denylist (jti blocklist). UUID-based subject and
+> `iss`/`aud` claims are deferred to Slice 5.4.
 
 ### 5.4 — Spring Security stateless filter chain
 - [ ] Configure stateless security: JWT validation filter, public allow-list (health, calculate, rules, signup, login)

@@ -25,4 +25,10 @@ public class AuthController {
         User user = authService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new SignupResponse(user.getId()));
     }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        String token = authService.login(request);
+        return ResponseEntity.ok(new LoginResponse(token));
+    }
 }

@@ -12,7 +12,8 @@ import org.springframework.test.context.ActiveProfiles;
             "spring.datasource.driver-class-name=org.h2.Driver",
             "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
             "spring.jpa.hibernate.ddl-auto=create-drop",
-            "spring.flyway.enabled=false"
+            "spring.flyway.enabled=false",
+            "JWT_SECRET=test-jwt-secret-for-prod-boot-test-only!!"
         })
 @ActiveProfiles("prod")
 class ProdProfileBootTest {

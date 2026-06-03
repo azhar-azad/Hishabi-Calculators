@@ -42,6 +42,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiError> handleUnauthorized(
+            UnauthorizedException ex, HttpServletRequest req) {
+        ApiError body =
+                new ApiError(
+                        Instant.now(),
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "UNAUTHORIZED",
+                        ex.getMessage(),
+                        req.getRequestURI(),
+                        null);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> handleValidation(
             MethodArgumentNotValidException ex, HttpServletRequest req) {

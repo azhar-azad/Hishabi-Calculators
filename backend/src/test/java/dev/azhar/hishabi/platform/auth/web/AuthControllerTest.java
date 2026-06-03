@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import dev.azhar.hishabi.platform.auth.model.User;
 import dev.azhar.hishabi.platform.auth.service.AuthService;
 import dev.azhar.hishabi.platform.error.ConflictException;
+import dev.azhar.hishabi.platform.error.UnauthorizedException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -24,6 +25,8 @@ class AuthControllerTest {
     @Autowired MockMvc mockMvc;
 
     @MockitoBean AuthService authService;
+
+    // --- signup ---
 
     @Test
     void signupHappyPath() throws Exception {
@@ -99,5 +102,37 @@ class AuthControllerTest {
                                         """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+    }
+
+    // --- login ---
+
+    @Test
+    void loginHappyPath() throws Exception {
+        when(authService.login(any())).thenReturn("test.jwt.token");
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"email":"alice@example.com","password":"Secret1pass"}
+                                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("test.jwt.token"));
+    }
+
+    @Test
+    void loginWrongPasswordReturns401() throws Exception {
+        when(authService.login(any())).thenThrow(new UnauthorizedException("Invalid credentials."));
+
+        mockMvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {"email":"alice@example.com","password":"WrongPass1"}
+                                        """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 }
