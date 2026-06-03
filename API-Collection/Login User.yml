@@ -1,0 +1,22 @@
+info:
+  name: Login User
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://localhost:8080/api/auth/login
+  body:
+    type: json
+    data: |-
+      {
+        "email": "test@example.com",
+        "password": "Secret1pass"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
