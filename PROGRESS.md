@@ -34,10 +34,10 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(auth): users table + entity`; push
 
 ### 5.2 — Signup endpoint (BCrypt)
-- [ ] `POST /api/auth/signup` — validates email + password strength, BCrypt hash, returns user id (not token yet)
-- [ ] Test: happy path; duplicate-email rejected with 409
-- [ ] Self code-review (high — auth)
-- [ ] Commit `feat(auth): signup endpoint`; push
+- [x] `POST /api/auth/signup` — validates email + password strength, BCrypt hash, returns user id (not token yet)
+- [x] Test: happy path; duplicate-email rejected with 409
+- [x] Self code-review (high — auth)
+- [x] Commit `feat(auth): signup endpoint`; push
 
 ### 5.3 — Login endpoint + JWT issuance
 - [ ] `POST /api/auth/login` — validates credentials, issues JWT (HS256, configurable secret + expiry)
