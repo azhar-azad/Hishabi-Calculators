@@ -27,11 +27,11 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 ## Phase 5 — Auth + history persistence
 
 ### 5.1 — Users table + entity
-- [ ] Migration: `users` (id, email unique, password_hash, created_at)
-- [ ] JPA entity `User` + repository
-- [ ] Test: persist + lookup by email via Testcontainers
-- [ ] Self code-review (high — schema)
-- [ ] Commit `feat(auth): users table + entity`; push
+- [x] Migration: `users` (id, email unique, password_hash, created_at)
+- [x] JPA entity `User` + repository
+- [x] Test: persist + lookup by email via Testcontainers
+- [x] Self code-review (high — schema)
+- [x] Commit `feat(auth): users table + entity`; push
 
 ### 5.2 — Signup endpoint (BCrypt)
 - [ ] `POST /api/auth/signup` — validates email + password strength, BCrypt hash, returns user id (not token yet)
