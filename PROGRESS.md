@@ -57,11 +57,6 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Self code-review (high — auth)
 - [x] Commit `feat(auth): JWT filter + security config`; push
 
-> **Known gaps (from code-review):**
-> - `JwtAuthenticationFilter` calls `isTokenValid()` then `extractSubject()` — two separate `parseClaims()` calls. Sub-millisecond expiry race can produce a 500. Fix before Slice 5.6: replace both with a single `extractSubjectIfValid(): Optional<String>`.
-> - `AccountController.me()` has no null guard on `Authentication`. Safe under current config but fragile. Fix before Slice 5.6.
-> - `SecurityEntryPoint` writes hand-rolled JSON; structurally different shape from `ApiError`. Fix when `ObjectMapper` injection is confirmed.
-
 ### 5.5 — Calculations history table
 - [ ] Migration: `calculations` (id, user_id FK, assessment_year, request_json, response_json, created_at)
 - [ ] JPA entity + repository
