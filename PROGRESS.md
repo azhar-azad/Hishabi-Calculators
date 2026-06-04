@@ -72,10 +72,11 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(history): calculator_type discriminator (Slice 5.5.1)`; push
 
 ### 5.6 — Persist calculation when logged-in
-- [ ] In tax calculate controller: if authenticated, save calculation row
-- [ ] Test: unauthenticated → not saved; authenticated → saved with correct user_id
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(history): save calculation for logged-in users`; push
+- [x] In tax calculate controller: if authenticated, save calculation row
+- [x] Test: unauthenticated → not saved; authenticated → saved with correct user_id + non-blank JSON
+- [x] Self code-review (medium) — fixed stale Javadoc, replaced "anonymousUser" literal with `instanceof AnonymousAuthenticationToken`, added JSON content assertions
+- [x] Fix: Surefire was silently skipping all `*IT.java` classes — added explicit `<includes>` in pom.xml (SecurityFilterChainIT also now runs for the first time)
+- [x] Commit `feat(history): save calculation for logged-in users`; push
 
 ### 5.7 — List calculation history
 - [ ] `GET /api/calculators/tax/history` — paginated, current user only

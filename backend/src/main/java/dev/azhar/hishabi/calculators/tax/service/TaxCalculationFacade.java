@@ -8,35 +8,57 @@ import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse;
 import dev.azhar.hishabi.calculators.tax.model.TaxRulesResponse;
 import dev.azhar.hishabi.calculators.tax.repository.AssessmentYearRepository;
+import dev.azhar.hishabi.platform.auth.repository.UserRepository;
 import dev.azhar.hishabi.platform.error.NotFoundException;
+import dev.azhar.hishabi.platform.history.Calculation;
+import dev.azhar.hishabi.platform.history.CalculationRepository;
+import dev.azhar.hishabi.platform.history.CalculatorType;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Application service for the tax calculator; resolves the rule set for an assessment year
- * (defaulting to the latest) and either runs a calculation or returns the rule set itself. Runs in
- * a read-only transaction so the rule set's lazy {@code @OneToMany} collections initialize before
- * they are walked or mapped.
+ * (defaulting to the latest) and either runs a calculation or returns the rule set itself.
+ * Transactions keep lazy {@code @OneToMany} collections open until after they are walked or mapped.
  */
 @Service
 public class TaxCalculationFacade {
 
     private final AssessmentYearRepository assessmentYears;
     private final TaxCalculationService calculationService;
+    private final UserRepository userRepository;
+    private final CalculationRepository calculationRepository;
+    private final ObjectMapper objectMapper;
 
     public TaxCalculationFacade(
-            AssessmentYearRepository assessmentYears, TaxCalculationService calculationService) {
+            AssessmentYearRepository assessmentYears,
+            TaxCalculationService calculationService,
+            UserRepository userRepository,
+            CalculationRepository calculationRepository,
+            ObjectMapper objectMapper) {
         this.assessmentYears = assessmentYears;
         this.calculationService = calculationService;
+        this.userRepository = userRepository;
+        this.calculationRepository = calculationRepository;
+        this.objectMapper = objectMapper;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public TaxCalculationResponse calculate(TaxCalculationRequest request) {
         AssessmentYear assessmentYear = resolveAssessmentYear(request.assessmentYear());
-        return calculationService.calculate(
-                assessmentYear.getRuleSet(), assessmentYear.getLabel(), request);
+
+        TaxCalculationResponse response =
+                calculationService.calculate(
+                        assessmentYear.getRuleSet(), assessmentYear.getLabel(), request);
+        persistIfAuthenticated(request, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -55,6 +77,33 @@ public class TaxCalculationFacade {
         return assessmentYears
                 .findByLabel(label)
                 .orElseThrow(() -> new NotFoundException("Unknown assessment year: " + label));
+    }
+
+    private void persistIfAuthenticated(
+            TaxCalculationRequest request, TaxCalculationResponse response) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth instanceof AnonymousAuthenticationToken) {
+            return;
+        }
+        userRepository
+                .findByEmailIgnoreCase(auth.getName())
+                .ifPresent(
+                        user -> {
+                            try {
+                                calculationRepository.save(
+                                        Calculation.builder()
+                                                .user(user)
+                                                .calculatorType(CalculatorType.TAX)
+                                                .requestJson(
+                                                        objectMapper.writeValueAsString(request))
+                                                .responseJson(
+                                                        objectMapper.writeValueAsString(response))
+                                                .build());
+                            } catch (JacksonException e) {
+                                throw new IllegalStateException(
+                                        "Serialization of validated DTOs cannot fail", e);
+                            }
+                        });
     }
 
     private TaxRulesResponse toRulesResponse(AssessmentYear assessmentYear) {
