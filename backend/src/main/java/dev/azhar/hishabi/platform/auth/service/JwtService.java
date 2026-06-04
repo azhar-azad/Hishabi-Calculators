@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Optional;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Service;
 
@@ -32,16 +33,11 @@ public class JwtService {
                 .compact();
     }
 
-    public String extractSubject(String token) {
-        return parseClaims(token).getSubject();
-    }
-
-    public boolean isTokenValid(String token) {
+    public Optional<String> extractSubjectIfValid(String token) {
         try {
-            parseClaims(token);
-            return true;
+            return Optional.of(parseClaims(token).getSubject());
         } catch (JwtException e) {
-            return false;
+            return Optional.empty();
         }
     }
 
