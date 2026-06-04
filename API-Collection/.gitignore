@@ -1,6 +1,9 @@
 # Secrets
 .env*
 
+# Bruno environment files — contain auth tokens and other secrets, never commit
+environments/
+
 # Dependencies
 node_modules
 
