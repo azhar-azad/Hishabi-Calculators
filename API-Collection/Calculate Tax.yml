@@ -5,12 +5,12 @@ info:
 
 http:
   method: POST
-  url: {{base_url}}/api/calculators/tax/calculate
+  url: "{{base_url}}/api/calculators/tax/calculate"
   body:
     type: json
     data: |-
       {
-        "assessmentYear": "{{assessment_year}}",
+        "assessmentYear": "2025-26",
         "category": "GENERAL",
         "location": "DHAKA_CHITTAGONG_CITY_CORP",
         "disabledChildren": 0,
