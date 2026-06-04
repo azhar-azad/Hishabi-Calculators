@@ -1,6 +1,8 @@
 package dev.azhar.hishabi.platform.auth.service;
 
 import dev.azhar.hishabi.platform.config.JwtProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
@@ -28,5 +30,22 @@ public class JwtService {
                 .expiration(Date.from(now.plusSeconds(expirySeconds)))
                 .signWith(key)
                 .compact();
+    }
+
+    public String extractSubject(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public boolean isTokenValid(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (JwtException e) {
+            return false;
+        }
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
     }
 }

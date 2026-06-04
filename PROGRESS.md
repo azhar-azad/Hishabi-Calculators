@@ -51,10 +51,16 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 > `iss`/`aud` claims are deferred to Slice 5.4.
 
 ### 5.4 — Spring Security stateless filter chain
-- [ ] Configure stateless security: JWT validation filter, public allow-list (health, calculate, rules, signup, login)
-- [ ] Test: protected endpoint without token → 401; with valid token → 200; with expired token → 401
-- [ ] Self code-review (high — auth)
-- [ ] Commit `feat(auth): JWT filter + security config`; push
+- [x] Configure stateless security: JWT validation filter, public allow-list (health, calculate, rules, signup, login)
+- [x] `GET /api/account/me` — protected endpoint (returns authenticated user's email; also used as integration-test anchor for Slice 5.9)
+- [x] Test: protected endpoint without token → 401; with valid token → 200; with expired/malformed token → 401; public health endpoint → 200
+- [x] Self code-review (high — auth)
+- [x] Commit `feat(auth): JWT filter + security config`; push
+
+> **Known gaps (from code-review):**
+> - `JwtAuthenticationFilter` calls `isTokenValid()` then `extractSubject()` — two separate `parseClaims()` calls. Sub-millisecond expiry race can produce a 500. Fix before Slice 5.6: replace both with a single `extractSubjectIfValid(): Optional<String>`.
+> - `AccountController.me()` has no null guard on `Authentication`. Safe under current config but fragile. Fix before Slice 5.6.
+> - `SecurityEntryPoint` writes hand-rolled JSON; structurally different shape from `ApiError`. Fix when `ObjectMapper` injection is confirmed.
 
 ### 5.5 — Calculations history table
 - [ ] Migration: `calculations` (id, user_id FK, assessment_year, request_json, response_json, created_at)

@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import dev.azhar.hishabi.platform.auth.model.User;
 import dev.azhar.hishabi.platform.auth.service.AuthService;
+import dev.azhar.hishabi.platform.auth.service.JwtService;
 import dev.azhar.hishabi.platform.error.ConflictException;
 import dev.azhar.hishabi.platform.error.UnauthorizedException;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ class AuthControllerTest {
     @Autowired MockMvc mockMvc;
 
     @MockitoBean AuthService authService;
+    @MockitoBean JwtService jwtService;
 
     // --- signup ---
 

@@ -5,12 +5,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import dev.azhar.hishabi.platform.auth.service.JwtService;
 import dev.azhar.hishabi.platform.health.HealthController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(HealthController.class)
@@ -19,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 class CorsConfigTest {
 
     @Autowired MockMvc mockMvc;
+    @MockitoBean JwtService jwtService;
 
     @Test
     void preflightFromAllowedOriginReturnsCorsHeaders() throws Exception {
