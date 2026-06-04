@@ -58,11 +58,11 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(auth): JWT filter + security config`; push
 
 ### 5.5 — Calculations history table
-- [ ] Migration: `calculations` (id, user_id FK, assessment_year, request_json, response_json, created_at)
-- [ ] JPA entity + repository
-- [ ] Test: persist + fetch by user via Testcontainers
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(history): calculations table + entity`; push
+- [x] Migration: `calculations` (id, user_id FK, assessment_year, request_json, response_json, created_at)
+- [x] JPA entity + repository (moved to `platform/history/` — history is a platform concern per PLAN.md §4)
+- [x] Test: persist + fetch by user via Testcontainers; paginated query tested
+- [x] Self code-review (medium)
+- [x] Commit `feat(history): calculations table + entity`; push
 
 ### 5.6 — Persist calculation when logged-in
 - [ ] In tax calculate controller: if authenticated, save calculation row
