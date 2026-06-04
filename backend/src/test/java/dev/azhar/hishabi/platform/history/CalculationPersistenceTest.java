@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.azhar.hishabi.platform.auth.model.User;
 import dev.azhar.hishabi.platform.auth.repository.UserRepository;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
@@ -56,17 +55,18 @@ class CalculationPersistenceTest {
         calcRepo.saveAndFlush(
                 Calculation.builder()
                         .user(alice)
-                        .assessmentYear("2025-26")
+                        .calculatorType(CalculatorType.TAX)
                         .requestJson("{\"income\":1000000}")
                         .responseJson("{\"netTax\":56820}")
                         .build());
 
-        List<Calculation> rows = calcRepo.findByUserId(alice.getId());
-        assertThat(rows).hasSize(1);
-        assertThat(rows.get(0).getAssessmentYear()).isEqualTo("2025-26");
-        assertThat(rows.get(0).getRequestJson()).contains("1000000");
-        assertThat(rows.get(0).getResponseJson()).contains("56820");
-        assertThat(rows.get(0).getCreatedAt()).isNotNull();
+        Page<Calculation> page =
+                calcRepo.findByUserIdOrderByCreatedAtDesc(alice.getId(), PageRequest.of(0, 10));
+        assertThat(page.getTotalElements()).isEqualTo(1);
+        assertThat(page.getContent().get(0).getCalculatorType()).isEqualTo(CalculatorType.TAX);
+        assertThat(page.getContent().get(0).getRequestJson()).contains("1000000");
+        assertThat(page.getContent().get(0).getResponseJson()).contains("56820");
+        assertThat(page.getContent().get(0).getCreatedAt()).isNotNull();
     }
 
     @Test
@@ -87,24 +87,32 @@ class CalculationPersistenceTest {
         calcRepo.saveAndFlush(
                 Calculation.builder()
                         .user(alice)
-                        .assessmentYear("2025-26")
+                        .calculatorType(CalculatorType.TAX)
                         .requestJson("{}")
                         .responseJson("{}")
                         .build());
         calcRepo.saveAndFlush(
                 Calculation.builder()
                         .user(bob)
-                        .assessmentYear("2025-26")
+                        .calculatorType(CalculatorType.TAX)
                         .requestJson("{}")
                         .responseJson("{}")
                         .build());
 
-        assertThat(calcRepo.findByUserId(alice.getId())).hasSize(1);
-        assertThat(calcRepo.findByUserId(bob.getId())).hasSize(1);
+        assertThat(
+                        calcRepo.findByUserIdOrderByCreatedAtDesc(
+                                        alice.getId(), PageRequest.of(0, 10))
+                                .getTotalElements())
+                .isEqualTo(1);
+        assertThat(
+                        calcRepo.findByUserIdOrderByCreatedAtDesc(
+                                        bob.getId(), PageRequest.of(0, 10))
+                                .getTotalElements())
+                .isEqualTo(1);
     }
 
     @Test
-    void paginatedQueryReturnsMostRecentFirst() {
+    void consolidatedHistoryReturnsMostRecentFirst() {
         User user =
                 userRepo.saveAndFlush(
                         User.builder()
@@ -112,26 +120,66 @@ class CalculationPersistenceTest {
                                 .passwordHash("$2a$12$hash3")
                                 .build());
 
-        calcRepo.saveAndFlush(
-                Calculation.builder()
-                        .user(user)
-                        .assessmentYear("2024-25")
-                        .requestJson("{\"seq\":1}")
-                        .responseJson("{}")
-                        .build());
-        calcRepo.saveAndFlush(
-                Calculation.builder()
-                        .user(user)
-                        .assessmentYear("2025-26")
-                        .requestJson("{\"seq\":2}")
-                        .responseJson("{}")
-                        .build());
+        Calculation first =
+                calcRepo.saveAndFlush(
+                        Calculation.builder()
+                                .user(user)
+                                .calculatorType(CalculatorType.TAX)
+                                .requestJson("{\"seq\":1}")
+                                .responseJson("{}")
+                                .build());
+        Calculation second =
+                calcRepo.saveAndFlush(
+                        Calculation.builder()
+                                .user(user)
+                                .calculatorType(CalculatorType.ZAKAT)
+                                .requestJson("{\"seq\":2}")
+                                .responseJson("{}")
+                                .build());
 
         Page<Calculation> page =
                 calcRepo.findByUserIdOrderByCreatedAtDesc(user.getId(), PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(2);
-        assertThat(page.getContent().get(0).getAssessmentYear()).isEqualTo("2025-26");
-        assertThat(page.getContent().get(1).getAssessmentYear()).isEqualTo("2024-25");
+        assertThat(page.getContent().get(0).getId()).isEqualTo(second.getId());
+        assertThat(page.getContent().get(1).getId()).isEqualTo(first.getId());
+    }
+
+    @Test
+    void typeFilterReturnsOnlyMatchingCalculatorType() {
+        User user =
+                userRepo.saveAndFlush(
+                        User.builder()
+                                .email("dave@example.com")
+                                .passwordHash("$2a$12$hash4")
+                                .build());
+
+        calcRepo.saveAndFlush(
+                Calculation.builder()
+                        .user(user)
+                        .calculatorType(CalculatorType.TAX)
+                        .requestJson("{}")
+                        .responseJson("{}")
+                        .build());
+        calcRepo.saveAndFlush(
+                Calculation.builder()
+                        .user(user)
+                        .calculatorType(CalculatorType.ZAKAT)
+                        .requestJson("{}")
+                        .responseJson("{}")
+                        .build());
+
+        Page<Calculation> taxOnly =
+                calcRepo.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                        user.getId(), CalculatorType.TAX, PageRequest.of(0, 10));
+        Page<Calculation> zakatOnly =
+                calcRepo.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                        user.getId(), CalculatorType.ZAKAT, PageRequest.of(0, 10));
+
+        assertThat(taxOnly.getTotalElements()).isEqualTo(1);
+        assertThat(taxOnly.getContent().get(0).getCalculatorType()).isEqualTo(CalculatorType.TAX);
+        assertThat(zakatOnly.getTotalElements()).isEqualTo(1);
+        assertThat(zakatOnly.getContent().get(0).getCalculatorType())
+                .isEqualTo(CalculatorType.ZAKAT);
     }
 }

@@ -1,15 +1,7 @@
 package dev.azhar.hishabi.platform.history;
 
 import dev.azhar.hishabi.platform.auth.model.User;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,8 +26,9 @@ public class Calculation {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "assessment_year", nullable = false, length = 10)
-    private String assessmentYear;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "calculator_type", nullable = false, length = 20)
+    private CalculatorType calculatorType;
 
     @Column(name = "request_json", nullable = false, columnDefinition = "TEXT")
     private String requestJson;

@@ -64,6 +64,13 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Self code-review (medium)
 - [x] Commit `feat(history): calculations table + entity`; push
 
+### 5.5.1 — Add calculator_type discriminator (pre-5.6 schema fix)
+- [x] Flyway V6: add `calculator_type VARCHAR(20) NOT NULL`; drop `assessment_year` (retained in request_json)
+- [x] `CalculatorType` enum (TAX, ZAKAT) in platform/history
+- [x] `Calculation` entity updated; `CalculationRepository` consolidates to two paginated methods
+- [x] Tests updated: consolidated history + type-filtered query both covered
+- [x] Commit `feat(history): calculator_type discriminator (Slice 5.5.1)`; push
+
 ### 5.6 — Persist calculation when logged-in
 - [ ] In tax calculate controller: if authenticated, save calculation row
 - [ ] Test: unauthenticated → not saved; authenticated → saved with correct user_id
