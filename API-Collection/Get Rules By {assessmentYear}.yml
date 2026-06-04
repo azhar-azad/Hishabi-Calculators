@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/calculators/tax/rules/2025-26
+  url: {{base_url}}/api/calculators/tax/rules/{{assessment_year}}
   auth: inherit
 
 settings:

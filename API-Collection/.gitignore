@@ -1,8 +1,10 @@
 # Secrets
 .env*
 
-# Bruno environment files — contain auth tokens and other secrets, never commit
-environments/
+# Bruno environment files may contain auth tokens — keep local only
+# Commit only *.example.yml templates so other devs know what vars to set
+environments/*.yml
+!environments/*.example.yml
 
 # Dependencies
 node_modules

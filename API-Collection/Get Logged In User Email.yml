@@ -5,10 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/account/me
+  url: {{base_url}}/api/account/me
   auth:
     type: bearer
-    token: {{bearer_token}}
+    token: "{{bearer_token}}"
 
 settings:
   encodeUrl: true

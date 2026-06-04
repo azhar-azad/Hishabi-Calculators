@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/health
+  url: {{base_url}}/api/health
   auth: inherit
 
 settings:
