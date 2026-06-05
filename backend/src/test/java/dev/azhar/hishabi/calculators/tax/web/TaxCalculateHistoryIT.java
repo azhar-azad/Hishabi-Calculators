@@ -91,8 +91,8 @@ class TaxCalculateHistoryIT {
                 .andExpect(status().isOk());
 
         Page<Calculation> history =
-                calculationRepository.findByUserIdOrderByCreatedAtDesc(
-                        user.getId(), Pageable.unpaged());
+                calculationRepository.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                        user.getId(), CalculatorType.TAX, Pageable.unpaged());
         Calculation saved = history.getContent().getFirst();
         assertThat(history.getTotalElements()).isOne();
         assertThat(saved.getCalculatorType()).isEqualTo(CalculatorType.TAX);

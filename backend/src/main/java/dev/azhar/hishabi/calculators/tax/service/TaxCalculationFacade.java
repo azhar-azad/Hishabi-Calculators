@@ -6,21 +6,30 @@ import dev.azhar.hishabi.calculators.tax.model.MinimumTaxFloor;
 import dev.azhar.hishabi.calculators.tax.model.RuleSet;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationRequest;
 import dev.azhar.hishabi.calculators.tax.model.TaxCalculationResponse;
+import dev.azhar.hishabi.calculators.tax.model.TaxHistoryItemResponse;
 import dev.azhar.hishabi.calculators.tax.model.TaxRulesResponse;
 import dev.azhar.hishabi.calculators.tax.repository.AssessmentYearRepository;
+import dev.azhar.hishabi.platform.auth.model.User;
 import dev.azhar.hishabi.platform.auth.repository.UserRepository;
 import dev.azhar.hishabi.platform.error.NotFoundException;
+import dev.azhar.hishabi.platform.error.UnauthorizedException;
 import dev.azhar.hishabi.platform.history.Calculation;
 import dev.azhar.hishabi.platform.history.CalculationRepository;
 import dev.azhar.hishabi.platform.history.CalculatorType;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 /**
@@ -30,6 +39,8 @@ import tools.jackson.databind.ObjectMapper;
  */
 @Service
 public class TaxCalculationFacade {
+
+    private static final Logger log = LoggerFactory.getLogger(TaxCalculationFacade.class);
 
     private final AssessmentYearRepository assessmentYears;
     private final TaxCalculationService calculationService;
@@ -67,6 +78,18 @@ public class TaxCalculationFacade {
         return toRulesResponse(assessmentYear);
     }
 
+    @Transactional(readOnly = true)
+    public Page<TaxHistoryItemResponse> listHistory(Pageable pageable) {
+        User user =
+                resolveAuthenticatedUser()
+                        .orElseThrow(
+                                () -> new UnauthorizedException("Authenticated user not found"));
+        return calculationRepository
+                .findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                        user.getId(), CalculatorType.TAX, pageable)
+                .map(this::toHistoryItem);
+    }
+
     private AssessmentYear resolveAssessmentYear(String label) {
         if (label == null || label.isBlank()) {
             return assessmentYears
@@ -81,12 +104,7 @@ public class TaxCalculationFacade {
 
     private void persistIfAuthenticated(
             TaxCalculationRequest request, TaxCalculationResponse response) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth instanceof AnonymousAuthenticationToken) {
-            return;
-        }
-        userRepository
-                .findByEmailIgnoreCase(auth.getName())
+        resolveAuthenticatedUser()
                 .ifPresent(
                         user -> {
                             try {
@@ -104,6 +122,32 @@ public class TaxCalculationFacade {
                                         "Serialization of validated DTOs cannot fail", e);
                             }
                         });
+    }
+
+    /**
+     * Resolves the currently authenticated {@link User} from the security context. Returns {@code
+     * Optional.empty()} for anonymous or unauthenticated principals, so callers decide how to
+     * handle the absence.
+     */
+    private Optional<User> resolveAuthenticatedUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth instanceof AnonymousAuthenticationToken) {
+            return Optional.empty();
+        }
+        return userRepository.findByEmailIgnoreCase(auth.getName());
+    }
+
+    private TaxHistoryItemResponse toHistoryItem(Calculation calc) {
+        try {
+            JsonNode req = objectMapper.readTree(calc.getRequestJson());
+            JsonNode res = objectMapper.readTree(calc.getResponseJson());
+            return new TaxHistoryItemResponse(calc.getId(), calc.getCreatedAt(), req, res);
+        } catch (JacksonException e) {
+            log.warn(
+                    "Calculation row id={} has malformed JSON; returning degraded entry",
+                    calc.getId());
+            return new TaxHistoryItemResponse(calc.getId(), calc.getCreatedAt(), null, null);
+        }
     }
 
     private TaxRulesResponse toRulesResponse(AssessmentYear assessmentYear) {

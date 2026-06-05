@@ -61,7 +61,8 @@ class CalculationPersistenceTest {
                         .build());
 
         Page<Calculation> page =
-                calcRepo.findByUserIdOrderByCreatedAtDesc(alice.getId(), PageRequest.of(0, 10));
+                calcRepo.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                        alice.getId(), CalculatorType.TAX, PageRequest.of(0, 10));
         assertThat(page.getTotalElements()).isEqualTo(1);
         assertThat(page.getContent().get(0).getCalculatorType()).isEqualTo(CalculatorType.TAX);
         assertThat(page.getContent().get(0).getRequestJson()).contains("1000000");
@@ -100,13 +101,13 @@ class CalculationPersistenceTest {
                         .build());
 
         assertThat(
-                        calcRepo.findByUserIdOrderByCreatedAtDesc(
-                                        alice.getId(), PageRequest.of(0, 10))
+                        calcRepo.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                                        alice.getId(), CalculatorType.TAX, PageRequest.of(0, 10))
                                 .getTotalElements())
                 .isEqualTo(1);
         assertThat(
-                        calcRepo.findByUserIdOrderByCreatedAtDesc(
-                                        bob.getId(), PageRequest.of(0, 10))
+                        calcRepo.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                                        bob.getId(), CalculatorType.TAX, PageRequest.of(0, 10))
                                 .getTotalElements())
                 .isEqualTo(1);
     }
@@ -132,13 +133,14 @@ class CalculationPersistenceTest {
                 calcRepo.saveAndFlush(
                         Calculation.builder()
                                 .user(user)
-                                .calculatorType(CalculatorType.ZAKAT)
+                                .calculatorType(CalculatorType.TAX)
                                 .requestJson("{\"seq\":2}")
                                 .responseJson("{}")
                                 .build());
 
         Page<Calculation> page =
-                calcRepo.findByUserIdOrderByCreatedAtDesc(user.getId(), PageRequest.of(0, 10));
+                calcRepo.findByUserIdAndCalculatorTypeOrderByCreatedAtDesc(
+                        user.getId(), CalculatorType.TAX, PageRequest.of(0, 10));
 
         assertThat(page.getTotalElements()).isEqualTo(2);
         assertThat(page.getContent().get(0).getId()).isEqualTo(second.getId());

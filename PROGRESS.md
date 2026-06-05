@@ -79,10 +79,10 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(history): save calculation for logged-in users`; push
 
 ### 5.7 — List calculation history
-- [ ] `GET /api/calculators/tax/history` — paginated, current user only
-- [ ] Test: returns own rows only; pagination respected
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(history): list endpoint`; push
+- [x] `GET /api/calculators/tax/history` — paginated, current user only
+- [x] Test: returns own rows only; pagination respected; unauthenticated → 401
+- [x] Self code-review (medium) — fixed deleted-user 404→401, degraded-entry on corrupt row, extracted `resolveAuthenticatedUser()` helper, removed dead `findByUserIdOrderByCreatedAtDesc`
+- [x] Commit `feat(history): list endpoint`; push
 
 ### 5.8 — Frontend signup page
 - [ ] `app/account/signup/page.tsx` with form, validation, error handling
