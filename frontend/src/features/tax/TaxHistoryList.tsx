@@ -46,7 +46,6 @@ export function TaxHistoryList() {
   useEffect(() => {
     if (isRestoring) return;
     if (!token) {
-      setLoading(false);
       router.replace('/account/login');
       return;
     }

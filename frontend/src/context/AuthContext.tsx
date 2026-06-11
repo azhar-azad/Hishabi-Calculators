@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // e.g. const { exp } = JSON.parse(atob(storedToken.split('.')[1]));
       //      if (Date.now() >= exp * 1000) { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(EMAIL_KEY); }
       // else { setToken(storedToken); setUser({ email: storedEmail }); }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToken(storedToken);
       setUser({ email: storedEmail });
     }
