@@ -114,14 +114,15 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 ## Phase 6 — Deployment
 
 ### 6.1 — Choose hosting provider *(decision — no commit)*
-- [ ] Compare Render / Railway / Fly.io free tiers at this moment; pick one
-- [ ] Record decision in PLAN.md §2
+- [x] Compare Render / Railway / Fly.io free tiers at this moment; pick one
+- [x] Record decision in PLAN.md §2
+> Backend: Render (free, spin-down). Frontend: Vercel Hobby (free). DB: Neon (free, 0.5 GB). UptimeRobot keep-alive to prevent Render cold starts.
 
 ### 6.2 — Backend Dockerfile
-- [ ] Multi-stage Dockerfile (Maven build → slim JRE runtime), exposes 8080
-- [ ] Verify `docker build` + `docker run` works locally; `/api/health` reachable
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(deploy): backend Dockerfile`; push
+- [x] Multi-stage Dockerfile (Maven build → slim JRE runtime), exposes 8080
+- [ ] Verify `docker build` + `docker run` works locally; `/api/health` reachable *(blocked: Docker Desktop not opening — verify when fixed)*
+- [x] Self code-review (medium) — fixed JSON-array ENTRYPOINT (backslash continuation is invalid), lowered MaxRAMPercentage 75→60 (non-heap headroom on 256 MB), wildcard JAR copy, non-root user, expanded .dockerignore
+- [x] Commit `chore(deploy): backend Dockerfile`; push
 
 ### 6.3 — Provision managed Postgres
 - [ ] Create Postgres instance on chosen provider

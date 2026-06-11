@@ -1,0 +1,10 @@
+target/
+.git/
+*.md
+frontend/
+API-Collection/
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db

@@ -22,6 +22,9 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | Auth                     | JWT, accounts optional                    | 2026-05-26 |
 | Repo layout              | Monorepo (backend/ + frontend/)           | 2026-05-26 |
 | Deployment target        | Render / Railway / Fly.io (free tier)     | 2026-05-26 |
+| Backend hosting          | Render (free web service — spins down 15 min idle, 750 hrs/month; mitigate with UptimeRobot keep-alive) | 2026-06-12 |
+| Frontend hosting         | Vercel (Hobby plan — free forever for Next.js) | 2026-06-12 |
+| Database hosting         | Neon (free forever, 0.5 GB — chosen over Render Postgres which expires after 30 days) | 2026-06-12 |
 | Mobile strategy          | Deferred; backend kept as clean REST API  | 2026-05-26 |
 | Tax-year scope (initial) | Schema multi-year, seed current year only | 2026-05-26 |
 | Java base package        | `dev.azhar.hishabi`                       | 2026-05-27 |
