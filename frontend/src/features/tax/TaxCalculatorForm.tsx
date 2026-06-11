@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { ApiError, apiPost } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { ApiError, apiPost, apiPostAuth } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 import type { TaxCalculationResponse } from '@/features/tax/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -140,10 +141,12 @@ function serverErrorMessage(e: unknown): string {
 }
 
 export function TaxCalculatorForm() {
+  const { token, isRestoring } = useAuth();
   const {
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<TaxFormValues>({
     resolver: zodResolver(taxFormSchema),
@@ -154,16 +157,31 @@ export function TaxCalculatorForm() {
   const [submitting, setSubmitting] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [result, setResult] = useState<TaxCalculationResponse | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const { unsubscribe } = watch(() => setSaved(false));
+    return unsubscribe;
+  }, [watch]);
 
   const onSubmit = async (values: TaxFormValues) => {
     setSubmitting(true);
     setServerError(null);
+    setSaved(false);
     try {
-      const response = await apiPost<TaxCalculationResponse>(
-        '/api/calculators/tax/calculate',
-        { assessmentYear: ASSESSMENT_YEAR, ...values },
-      );
+      const payload = { assessmentYear: ASSESSMENT_YEAR, ...values };
+      const response = token
+        ? await apiPostAuth<TaxCalculationResponse>(
+          '/api/calculators/tax/calculate',
+          payload,
+          token,
+        )
+        : await apiPost<TaxCalculationResponse>(
+          '/api/calculators/tax/calculate',
+          payload,
+        );
       setResult(response);
+      if (token) setSaved(true);
     } catch (e) {
       setResult(null);
       setServerError(serverErrorMessage(e));
@@ -281,7 +299,7 @@ export function TaxCalculatorForm() {
         </CardContent>
       </Card>
 
-      <Button type="submit" className="self-start" disabled={submitting}>
+      <Button type="submit" className="self-start" disabled={submitting || isRestoring}>
         {submitting ? 'Calculating…' : 'Calculate'}
       </Button>
 
@@ -292,6 +310,16 @@ export function TaxCalculatorForm() {
       )}
 
       {result && <TaxBreakdown result={result} />}
+
+      {saved && (
+        <p
+          role="status"
+          data-testid="save-indicator"
+          className="text-sm text-green-600"
+        >
+          ✓ Saved to your history.
+        </p>
+      )}
     </form>
   );
 }

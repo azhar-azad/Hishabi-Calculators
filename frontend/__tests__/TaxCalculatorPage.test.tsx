@@ -6,6 +6,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({
+    token: null,
+    user: null,
+    isRestoring: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
+}));
+
 describe('Tax calculator page', () => {
   it('renders the AY 2025-26 income tax heading', async () => {
     vi.stubGlobal(

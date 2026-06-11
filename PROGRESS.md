@@ -85,23 +85,23 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(history): list endpoint`; push
 
 ### 5.8 — Frontend signup page
-- [ ] `app/account/signup/page.tsx` with form, validation, error handling
-- [ ] Test: form renders; mocked API success redirects to login
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend-auth): signup page`; push
+- [x] `app/account/signup/page.tsx` with form, validation, error handling
+- [x] Test: form renders; mocked API success redirects to login; 409 duplicate-email error
+- [x] Self code-review (medium) — fixed noValidate, aria-live on field errors, mode: 'onTouched', non-409 ApiError body.message surfaced, test payload assertion added
+- [x] Commit `feat(frontend-auth): signup page`; push
 
 ### 5.9 — Frontend login + auth context
-- [ ] `app/account/login/page.tsx`; React context for current user + token (httpOnly cookie preferred)
-- [ ] API client attaches token to requests
-- [ ] Test: login flow stores user; logout clears it
-- [ ] Self code-review (high — auth client)
-- [ ] Commit `feat(frontend-auth): login + auth context`; push
+- [x] `app/account/login/page.tsx`; React context (user/token/isRestoring, localStorage persistence, TOKEN_KEY/EMAIL_KEY exported)
+- [x] API client attaches token: `apiGetAuth`/`apiPostAuth` with `string | null` guard; rejects with ApiError(401) when null
+- [x] Test: login flow stores user; logout clears it; isRestoring transitions false after effect
+- [x] Self code-review (high — auth client) — added res.token guard, isRestoring, exported keys, TODO for expiry + shared error handler, token null-guard in api functions
+- [x] Commit `feat(frontend-auth): login + auth context`; push
 
 ### 5.10 — "Save calculation" CTA when logged in
-- [ ] Tax page shows save indicator / success toast when authenticated
-- [ ] Test: logged-out → no save UI; logged-in → CTA visible
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend-tax): save indicator for logged-in users`; push
+- [x] Tax page shows save indicator / success toast when authenticated
+- [x] Test: logged-out → no save UI; logged-in → CTA visible
+- [x] Self code-review (medium) — dropped broken /account/history link (Slice 5.11 not built yet), reset saved on field edit via watch subscription, removed dead setSaved in catch, disabled submit during isRestoring
+- [x] Commit `feat(frontend-tax): save indicator for logged-in users`; push
 
 ### 5.11 — History page
 - [ ] `app/account/history/page.tsx` — list of past calculations, click to re-open with inputs prefilled
