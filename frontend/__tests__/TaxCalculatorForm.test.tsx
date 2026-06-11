@@ -223,4 +223,47 @@ describe('Tax calculator form', () => {
       }),
     );
   });
+
+  it('prefills form fields from sessionStorage on mount', async () => {
+    sessionStorage.setItem(
+      'hishabi_tax_prefill',
+      JSON.stringify({
+        assessmentYear: '2025-26',
+        category: 'GENERAL',
+        location: 'DHAKA_CHITTAGONG_CITY_CORP',
+        disabledChildren: 0,
+        income: {
+          basic: 999_999,
+          houseRent: 0,
+          conveyance: 0,
+          medicalAllowance: 0,
+          leaveEncashment: 0,
+          performanceBonus: 0,
+          yearlyBonus: 0,
+          festivalBonus: 0,
+          overtime: 0,
+          transportation: 0,
+        },
+        investments: {
+          sanchayPatra: 0,
+          dps: 0,
+          mutualFund: 0,
+          treasuryBond: 0,
+          providentFundEmployee: 0,
+          providentFundEmployer: 0,
+          stock: 0,
+        },
+        advanceIncomeTaxPaid: 0,
+      }),
+    );
+
+    render(<TaxCalculatorForm />);
+
+    await waitFor(() => {
+      expect((screen.getByLabelText('Basic') as HTMLInputElement).value).toBe(
+        '999999',
+      );
+    });
+    expect(sessionStorage.getItem('hishabi_tax_prefill')).toBeNull();
+  });
 });

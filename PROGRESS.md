@@ -104,10 +104,10 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `feat(frontend-tax): save indicator for logged-in users`; push
 
 ### 5.11 — History page
-- [ ] `app/account/history/page.tsx` — list of past calculations, click to re-open with inputs prefilled
-- [ ] Test: renders list from mocked API; click navigates to tax page with state
-- [ ] Self code-review (medium)
-- [ ] Commit `feat(frontend-auth): history page`; push
+- [x] `app/account/history/page.tsx` — list of past calculations, click to re-open with inputs prefilled
+- [x] Test: renders list from mocked API; click navigates to tax page with state
+- [x] Self code-review (medium) — fixed null crash on degraded entries (response: null type + guarded render), imported PREFILL_KEY from single source, cleared loading on redirect path, 401 → redirect to login instead of error message
+- [x] Commit `feat(frontend-auth): history page`; push
 
 ---
 
