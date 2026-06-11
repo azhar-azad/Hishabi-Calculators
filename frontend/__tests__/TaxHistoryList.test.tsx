@@ -122,10 +122,7 @@ describe('TaxHistoryList', () => {
   });
 
   it('shows empty state when no calculations have been saved', async () => {
-    vi.stubGlobal(
-      'fetch',
-      makeFetchMock({ content: [], totalElements: 0 }),
-    );
+    vi.stubGlobal('fetch', makeFetchMock({ content: [], totalElements: 0 }));
 
     render(<TaxHistoryList />);
 
