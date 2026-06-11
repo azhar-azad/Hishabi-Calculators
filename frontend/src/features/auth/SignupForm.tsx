@@ -13,16 +13,18 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 const signupSchema = z.object({
-  email: z.string()
+  email: z
+    .string()
     .min(1, 'Email is required')
     .email('Enter a valid email address'),
-  password: z.string()
+  password: z
+    .string()
     .min(8, 'Must be at least 8 characters')
     .max(128, 'Must be at most 128 characters')
     .regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)\S+$/,
       'Must contain at least one uppercase letter, one lowercase letter, and one digit',
-      ),
+    ),
 });
 
 type SignupValues = z.infer<typeof signupSchema>;
@@ -35,7 +37,10 @@ export function SignupForm() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignupValues>({ resolver: zodResolver(signupSchema), mode: 'onTouched' });
+  } = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onTouched',
+  });
 
   async function onSubmit(values: SignupValues) {
     setServerError(null);
@@ -49,7 +54,9 @@ export function SignupForm() {
         setServerError('An account with this email already exists.');
       } else if (err instanceof ApiError) {
         const msg = (err.body as Record<string, unknown>)?.message;
-        setServerError(typeof msg === 'string' ? msg : 'Signup failed. Please try again.');
+        setServerError(
+          typeof msg === 'string' ? msg : 'Signup failed. Please try again.',
+        );
       } else {
         setServerError('Signup failed. Please try again.');
       }
@@ -62,7 +69,11 @@ export function SignupForm() {
         <CardTitle>Create an account</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+          className="space-y-4"
+        >
           <div className="space-y-1">
             <Label htmlFor="email">Email</Label>
             <Input
@@ -72,7 +83,9 @@ export function SignupForm() {
               {...register('email')}
             />
             {errors.email && (
-              <p aria-live="polite" className="text-sm text-red-500">{errors.email.message}</p>
+              <p aria-live="polite" className="text-sm text-red-500">
+                {errors.email.message}
+              </p>
             )}
           </div>
 
@@ -85,7 +98,9 @@ export function SignupForm() {
               {...register('password')}
             />
             {errors.password && (
-              <p aria-live="polite" className="text-sm text-red-500">{errors.password.message}</p>
+              <p aria-live="polite" className="text-sm text-red-500">
+                {errors.password.message}
+              </p>
             )}
           </div>
 
