@@ -1,0 +1,13 @@
+name: LOCAL
+variables:
+  - name: base_url
+    value: http://localhost:8080
+  - name: assessment_year
+    value: "2025-26"
+  - name: test_email
+    value: test@example.com
+  - name: test_password
+    value: Secret1pass
+  - name: bearer_token
+    value: ""
+    # Paste your JWT here after running Login User — never commit a real token

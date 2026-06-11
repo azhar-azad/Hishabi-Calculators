@@ -47,3 +47,35 @@ export function apiPost<T, B = unknown>(path: string, body: B): Promise<T> {
     body: JSON.stringify(body),
   });
 }
+
+export function apiGetAuth<T>(path: string, token: string | null): Promise<T> {
+  if (!token) {
+    return Promise.reject(new ApiError(401, { message: 'Not authenticated' }));
+  }
+  return request<T>(path, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function apiPostAuth<T, B = unknown>(
+  path: string,
+  body: B,
+  token: string | null,
+): Promise<T> {
+  if (!token) {
+    return Promise.reject(new ApiError(401, { message: 'Not authenticated' }));
+  }
+  return request<T>(path, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+}

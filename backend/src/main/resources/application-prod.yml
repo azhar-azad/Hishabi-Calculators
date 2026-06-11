@@ -12,3 +12,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   flyway:
     enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiry-seconds: 86400

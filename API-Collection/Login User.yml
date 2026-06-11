@@ -1,0 +1,22 @@
+info:
+  name: Login User
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: "{{base_url}}/api/auth/login"
+  body:
+    type: json
+    data: |-
+      {
+        "email": "{{test_email}}",
+        "password": "{{test_password}}"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

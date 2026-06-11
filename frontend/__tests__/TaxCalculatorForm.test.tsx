@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TaxCalculatorForm } from '@/features/tax/TaxCalculatorForm';
 import type { TaxCalculationResponse } from '@/features/tax/types';
@@ -26,7 +26,28 @@ const WORKED_EXAMPLE: TaxCalculationResponse = {
   netTax: 56_820,
 };
 
+// Mutable — tests set this before render to simulate auth state.
+let currentToken: string | null = null;
+
+vi.mock('@/context/AuthContext', () => ({
+  useAuth: () => ({
+    token: currentToken,
+    user: currentToken ? { email: 'user@example.com' } : null,
+    isRestoring: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+  }),
+}));
+
 describe('Tax calculator form', () => {
+  beforeEach(() => {
+    currentToken = null; // default: logged out
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('renders income, investment, and other fields with sensible defaults', () => {
     render(<TaxCalculatorForm />);
 
@@ -81,10 +102,6 @@ describe('Tax calculator form', () => {
     expect(
       await screen.findByText(/Advance Income Tax is required/i),
     ).toBeDefined();
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
   });
 
   it('submits and shows the net tax on success', async () => {
@@ -161,5 +178,92 @@ describe('Tax calculator form', () => {
 
     // net tax (appears as "56,820 BDT" in both after-rebate and net-tax rows)
     expect(screen.getAllByText('56,820 BDT').length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('shows no save indicator when logged out after a successful calculation', async () => {
+    // currentToken is null (set in beforeEach)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(WORKED_EXAMPLE), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
+    );
+
+    render(<TaxCalculatorForm />);
+    fireEvent.click(screen.getByRole('button', { name: /Calculate/i }));
+
+    // Wait for the result to appear (confirms the response was processed)
+    await screen.findAllByText(/56,820/);
+    expect(screen.queryByTestId('save-indicator')).toBeNull();
+  });
+
+  it('shows save indicator and sends auth header when logged in', async () => {
+    currentToken = 'test-tok';
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(WORKED_EXAMPLE), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<TaxCalculatorForm />);
+    fireEvent.click(screen.getByRole('button', { name: /Calculate/i }));
+
+    expect(await screen.findByTestId('save-indicator')).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/api/calculators/tax/calculate'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer test-tok',
+        }),
+      }),
+    );
+  });
+
+  it('prefills form fields from sessionStorage on mount', async () => {
+    sessionStorage.setItem(
+      'hishabi_tax_prefill',
+      JSON.stringify({
+        assessmentYear: '2025-26',
+        category: 'GENERAL',
+        location: 'DHAKA_CHITTAGONG_CITY_CORP',
+        disabledChildren: 0,
+        income: {
+          basic: 999_999,
+          houseRent: 0,
+          conveyance: 0,
+          medicalAllowance: 0,
+          leaveEncashment: 0,
+          performanceBonus: 0,
+          yearlyBonus: 0,
+          festivalBonus: 0,
+          overtime: 0,
+          transportation: 0,
+        },
+        investments: {
+          sanchayPatra: 0,
+          dps: 0,
+          mutualFund: 0,
+          treasuryBond: 0,
+          providentFundEmployee: 0,
+          providentFundEmployer: 0,
+          stock: 0,
+        },
+        advanceIncomeTaxPaid: 0,
+      }),
+    );
+
+    render(<TaxCalculatorForm />);
+
+    await waitFor(() => {
+      expect((screen.getByLabelText('Basic') as HTMLInputElement).value).toBe(
+        '999999',
+      );
+    });
+    expect(sessionStorage.getItem('hishabi_tax_prefill')).toBeNull();
   });
 });
