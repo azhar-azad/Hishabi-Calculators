@@ -125,14 +125,14 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Commit `chore(deploy): backend Dockerfile`; push
 
 ### 6.3 — Provision managed Postgres
-- [ ] Create Postgres instance on chosen provider
-- [ ] Capture connection details into a secrets store (provider's env-var UI)
-- [ ] (no commit — infra setup)
+- [x] Create Postgres instance on chosen provider — Neon, region us-west-2
+- [x] Capture connection details into a secrets store (provider's env-var UI) — stored in `backend/.env.production` (gitignored)
+- [x] (no commit — infra setup)
 
 ### 6.4 — Backend env config + deploy
 - [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`, **`SPRING_PROFILES_ACTIVE=prod`**
-- [ ] Add a fail-fast `EnvironmentPostProcessor` (or `ApplicationContextInitializer`) that errors at startup if `spring.profiles.active` is missing or contains `dev` — closes the slice 1.2 footgun where a forgotten `SPRING_PROFILES_ACTIVE=prod` would silently fall back to dev profile + H2 in-memory DB in production
-- [ ] Deploy backend image; verify `/api/health` and Flyway/Liquibase migrations ran
+- [x] Add a fail-fast `EnvironmentPostProcessor` — throws at startup on Render if `SPRING_PROFILES_ACTIVE` is missing, is `dev`, or has both `prod` and `dev` active; 94/94 tests green
+- [ ] Deploy backend image; verify `/api/health` and Flyway migrations ran
 - [ ] (no commit — infra deploy; capture deploy notes in PLAN.md if useful)
 
 ### 6.5 — Frontend deploy
