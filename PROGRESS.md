@@ -136,9 +136,10 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Note: Render branch set to `code` for now; switch to `main` after Phase 6 PR is merged
 
 ### 6.5 — Frontend deploy
-- [ ] Deploy Next.js (Vercel or same provider); set `NEXT_PUBLIC_API_URL` to production backend
-- [ ] Verify landing page loads
-- [ ] (no commit — infra deploy)
+- [x] Deploy Next.js on Vercel Hobby (free); `NEXT_PUBLIC_API_URL` set to Render backend
+- [x] Fixed Next.js 16 / Vercel runtime compat: added `output: 'export'` to `next.config.ts` + `vercel.json` with `framework: null` to serve static `out/` directly
+- [x] Verify landing page loads — home page confirmed live
+- [ ] **TODO next session:** update `APP_CORS_ALLOWED_ORIGINS` on Render from `*` to the exact Vercel URL, then redeploy backend
 
 ### 6.6 — Production smoke test
 - [ ] Hit `POST /api/calculators/tax/calculate` from prod frontend with PLAN.md §10.8 inputs; confirm net tax = 56,820
