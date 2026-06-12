@@ -130,10 +130,10 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] (no commit — infra setup)
 
 ### 6.4 — Backend env config + deploy
-- [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`, **`SPRING_PROFILES_ACTIVE=prod`**
+- [x] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS=*` (placeholder — update after 6.5), `SPRING_PROFILES_ACTIVE=prod`
 - [x] Add a fail-fast `EnvironmentPostProcessor` — throws at startup on Render if `SPRING_PROFILES_ACTIVE` is missing, is `dev`, or has both `prod` and `dev` active; 94/94 tests green
-- [ ] Deploy backend image; verify `/api/health` and Flyway migrations ran
-- [ ] (no commit — infra deploy; capture deploy notes in PLAN.md if useful)
+- [x] Deploy backend image; service live on Render (`code` branch); Flyway V1–V6 ran; `/api/health` UP
+- [x] Note: Render branch set to `code` for now; switch to `main` after Phase 6 PR is merged
 
 ### 6.5 — Frontend deploy
 - [ ] Deploy Next.js (Vercel or same provider); set `NEXT_PUBLIC_API_URL` to production backend
