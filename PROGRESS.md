@@ -120,7 +120,7 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 
 ### 6.2 — Backend Dockerfile
 - [x] Multi-stage Dockerfile (Maven build → slim JRE runtime), exposes 8080
-- [ ] Verify `docker build` + `docker run` works locally; `/api/health` reachable *(blocked: Docker Desktop not opening — verify when fixed)*
+- [x] Verify `docker build` + `docker run` works locally; `/api/health` reachable — all 6 steps passed (build, run, health, non-root user, image size, stop)
 - [x] Self code-review (medium) — fixed JSON-array ENTRYPOINT (backslash continuation is invalid), lowered MaxRAMPercentage 75→60 (non-heap headroom on 256 MB), wildcard JAR copy, non-root user, expanded .dockerignore
 - [x] Commit `chore(deploy): backend Dockerfile`; push
 
