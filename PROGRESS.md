@@ -114,25 +114,26 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 ## Phase 6 — Deployment
 
 ### 6.1 — Choose hosting provider *(decision — no commit)*
-- [ ] Compare Render / Railway / Fly.io free tiers at this moment; pick one
-- [ ] Record decision in PLAN.md §2
+- [x] Compare Render / Railway / Fly.io free tiers at this moment; pick one
+- [x] Record decision in PLAN.md §2
+> Backend: Render (free, spin-down). Frontend: Vercel Hobby (free). DB: Neon (free, 0.5 GB). UptimeRobot keep-alive to prevent Render cold starts.
 
 ### 6.2 — Backend Dockerfile
-- [ ] Multi-stage Dockerfile (Maven build → slim JRE runtime), exposes 8080
-- [ ] Verify `docker build` + `docker run` works locally; `/api/health` reachable
-- [ ] Self code-review (medium)
-- [ ] Commit `chore(deploy): backend Dockerfile`; push
+- [x] Multi-stage Dockerfile (Maven build → slim JRE runtime), exposes 8080
+- [x] Verify `docker build` + `docker run` works locally; `/api/health` reachable — all 6 steps passed (build, run, health, non-root user, image size, stop)
+- [x] Self code-review (medium) — fixed JSON-array ENTRYPOINT (backslash continuation is invalid), lowered MaxRAMPercentage 75→60 (non-heap headroom on 256 MB), wildcard JAR copy, non-root user, expanded .dockerignore
+- [x] Commit `chore(deploy): backend Dockerfile`; push
 
 ### 6.3 — Provision managed Postgres
-- [ ] Create Postgres instance on chosen provider
-- [ ] Capture connection details into a secrets store (provider's env-var UI)
-- [ ] (no commit — infra setup)
+- [x] Create Postgres instance on chosen provider — Neon, region us-west-2
+- [x] Capture connection details into a secrets store (provider's env-var UI) — stored in `backend/.env.production` (gitignored)
+- [x] (no commit — infra setup)
 
 ### 6.4 — Backend env config + deploy
-- [ ] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS`, **`SPRING_PROFILES_ACTIVE=prod`**
-- [ ] Add a fail-fast `EnvironmentPostProcessor` (or `ApplicationContextInitializer`) that errors at startup if `spring.profiles.active` is missing or contains `dev` — closes the slice 1.2 footgun where a forgotten `SPRING_PROFILES_ACTIVE=prod` would silently fall back to dev profile + H2 in-memory DB in production
-- [ ] Deploy backend image; verify `/api/health` and Flyway/Liquibase migrations ran
-- [ ] (no commit — infra deploy; capture deploy notes in PLAN.md if useful)
+- [x] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS=*` (placeholder — update after 6.5), `SPRING_PROFILES_ACTIVE=prod`
+- [x] Add a fail-fast `EnvironmentPostProcessor` — throws at startup on Render if `SPRING_PROFILES_ACTIVE` is missing, is `dev`, or has both `prod` and `dev` active; 94/94 tests green
+- [x] Deploy backend image; service live on Render (`code` branch); Flyway V1–V6 ran; `/api/health` UP
+- [x] Note: Render branch set to `code` for now; switch to `main` after Phase 6 PR is merged
 
 ### 6.5 — Frontend deploy
 - [ ] Deploy Next.js (Vercel or same provider); set `NEXT_PUBLIC_API_URL` to production backend

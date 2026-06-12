@@ -6,8 +6,14 @@ import type { TaxCalculationResponse } from '@/features/tax/types';
 const mockPush = vi.fn();
 const mockReplace = vi.fn();
 
+// Return a stable router object so `useEffect([..., router])` doesn't re-run
+// on every re-render. A new object on each useRouter() call would cause the
+// effect to fire twice, making the second fetch reuse an already-consumed
+// Response body and crash the component into the error state.
+const stableRouter = { push: mockPush, replace: mockReplace };
+
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useRouter: () => stableRouter,
 }));
 
 let currentToken: string | null = 'test-token';
@@ -81,10 +87,22 @@ const HISTORY_PAGE = {
   totalElements: 1,
 };
 
+function makeFetchMock(body: unknown, status = 200) {
+  return vi.fn().mockImplementation(() =>
+    Promise.resolve(
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ),
+  );
+}
+
 beforeEach(() => {
   currentToken = 'test-token';
   mockPush.mockClear();
   mockReplace.mockClear();
+  sessionStorage.clear();
 });
 
 afterEach(() => {
@@ -93,15 +111,7 @@ afterEach(() => {
 
 describe('TaxHistoryList', () => {
   it('renders a list of history items from the API', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(HISTORY_PAGE), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      ),
-    );
+    vi.stubGlobal('fetch', makeFetchMock(HISTORY_PAGE));
 
     render(<TaxHistoryList />);
 
@@ -112,15 +122,7 @@ describe('TaxHistoryList', () => {
   });
 
   it('shows empty state when no calculations have been saved', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ content: [], totalElements: 0 }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      ),
-    );
+    vi.stubGlobal('fetch', makeFetchMock({ content: [], totalElements: 0 }));
 
     render(<TaxHistoryList />);
 
@@ -138,15 +140,7 @@ describe('TaxHistoryList', () => {
   });
 
   it('clicking Open stores prefill in sessionStorage and navigates to tax page', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify(HISTORY_PAGE), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      ),
-    );
+    vi.stubGlobal('fetch', makeFetchMock(HISTORY_PAGE));
 
     render(<TaxHistoryList />);
     fireEvent.click(await screen.findByRole('button', { name: /Open/i }));
