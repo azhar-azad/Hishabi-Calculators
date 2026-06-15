@@ -139,16 +139,16 @@ All slices done. Full detail (design rationale, gotchas, exact commit hashes) in
 - [x] Deploy Next.js on Vercel Hobby (free); `NEXT_PUBLIC_API_URL` set to Render backend
 - [x] Fixed Next.js 16 / Vercel runtime compat: added `output: 'export'` to `next.config.ts` + `vercel.json` with `framework: null` to serve static `out/` directly
 - [x] Verify landing page loads — home page confirmed live
-- [ ] **TODO next session:** update `APP_CORS_ALLOWED_ORIGINS` on Render from `*` to the exact Vercel URL, then redeploy backend
+- [x] Updated `APP_CORS_ALLOWED_ORIGINS` on Render to `https://hishabi-calculators.vercel.app`; redeployed — CORS preflight now passes
 
 ### 6.6 — Production smoke test
-- [ ] Hit `POST /api/calculators/tax/calculate` from prod frontend with PLAN.md §10.8 inputs; confirm net tax = 56,820
-- [ ] Sign up + log in + save calculation + view history
-- [ ] (no commit — verification)
+- [x] Hit `POST /api/calculators/tax/calculate` from prod frontend with PLAN.md §10.8 inputs; confirmed net tax = 56,820
+- [x] Sign up + log in + save calculation + view history
+- [x] (no commit — verification)
 
 ### 6.7 — Uptime check
-- [ ] Configure provider's built-in uptime check or a free external one (e.g., UptimeRobot) on `/api/health`
-- [ ] (no commit — infra config)
+- [x] UptimeRobot configured — HTTP monitor on `/api/health`, 5-minute interval
+- [x] (no commit — infra config)
 
 ---
 
