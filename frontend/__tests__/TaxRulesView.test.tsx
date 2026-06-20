@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { TaxRulesView } from '@/features/tax/TaxRulesView';
 import type { TaxRulesResponse } from '@/features/tax/types';
@@ -29,39 +29,20 @@ const rules: TaxRulesResponse = {
   minimumTaxFloors: [{ location: 'DHAKA_CHITTAGONG_CITY_CORP', amount: 5000 }],
 };
 
-function stubFetch(payload: unknown, ok = true, status = 200) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok,
-      status,
-      text: async () => JSON.stringify(payload),
-    }),
-  );
-}
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 describe('TaxRulesView', () => {
-  it('renders the six slab rows after a successful fetch', async () => {
-    stubFetch(rules);
-    render(<TaxRulesView />);
+  it('renders one row per slab from the supplied rules', () => {
+    render(<TaxRulesView rules={rules} />);
 
-    expect(screen.getByText(/loading tax rules/i)).toBeDefined();
-
-    const rows = await screen.findAllByTestId('slab-row');
+    const rows = screen.getAllByTestId('slab-row');
     expect(rows).toHaveLength(6);
     expect(screen.getByText('Remaining')).toBeDefined();
     expect(screen.getByText('30%')).toBeDefined();
-    expect(screen.getByText('GENERAL')).toBeDefined();
   });
 
-  it('shows an error state when the fetch fails', async () => {
-    stubFetch({ message: 'boom' }, false, 500);
-    render(<TaxRulesView />);
+  it('renders the category thresholds', () => {
+    render(<TaxRulesView rules={rules} />);
 
-    expect(await screen.findByText(/error loading tax rules/i)).toBeDefined();
+    expect(screen.getByText('GENERAL')).toBeDefined();
+    expect(screen.getByText('350,000 BDT')).toBeDefined();
   });
 });

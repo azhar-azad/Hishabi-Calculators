@@ -49,13 +49,13 @@ NBR released the AY 2026-27 individual schedule with changed values (General thr
 - [x] Commit `feat(tax): seed AY 2026-27 rules + years endpoint`; push
 
 ### 7.2 — Frontend: assessment-year selector + copy + rebate-label fix
-- [ ] New `features/tax/TaxCalculator.tsx` client wrapper: fetch `/years`, hold `selectedYear` (default newest), shadcn `Select`; fetch rules once and pass to `TaxRulesView` + `TaxCalculatorForm`
-- [ ] `TaxRulesView` / `TaxCalculatorForm`: drop hardcoded `ASSESSMENT_YEAR`; take year (+ rules) as props
-- [ ] `TaxBreakdown.rebateLegLabel`: take rebate fractions/cap from rules instead of hardcoded 0.03/0.15/1M (fixes PLAN.md §11 tech debt)
-- [ ] Copy: `app/calculators/tax/page.tsx` + `app/page.tsx` year-neutral
-- [ ] Tests (`__tests__/`): year options render + switching changes payload year; form default year 2026-27; breakdown label uses 10%/750k
-- [ ] `npm run lint && npm test` green
-- [ ] Commit `feat(frontend-tax): assessment-year selector + AY 2026-27`; push
+- [x] New `features/tax/TaxCalculator.tsx` client wrapper: fetch `/years`, hold `selectedYear` (default newest), shadcn `Select`; fetch rules once and pass to `TaxRulesView` + `TaxCalculatorForm`
+- [x] `TaxRulesView` (now presentational, takes `rules`) / `TaxCalculatorForm` (optional `assessmentYear` + `rules` props, omits year → backend latest): dropped hardcoded `ASSESSMENT_YEAR`
+- [x] `TaxBreakdown.rebateLegLabel`: takes rebate fractions/cap via `rebateConfig` prop, legacy 2025-26 fallback (fixes PLAN.md §11 tech debt)
+- [x] Copy: `app/calculators/tax/page.tsx` + `app/page.tsx` year-neutral
+- [x] Tests (`__tests__/`): wrapper defaults to newest year + sends it in payload; breakdown label uses 10%/750k (and 2025-26 fallback); rewrote rules-view/page tests for the new props
+- [x] `npm run check` green — 39 tests, lint/type/format clean
+- [x] Commit `feat(frontend-tax): assessment-year selector + AY 2026-27`; push
 
 ### 7.3 — Verify end-to-end + PR
 - [ ] Run backend (dev/H2, runs V1–V7) + frontend; preview-verify: selector lists 3 years; 2026-27 §10.8 inputs → 75,200; 2025-26 → 56,820; rules table shows 35% top slab + General 375k

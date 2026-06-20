@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ApiError, apiPost, apiPostAuth } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import type { TaxCalculationResponse } from '@/features/tax/types';
+import type {
+  TaxCalculationResponse,
+  TaxRulesResponse,
+} from '@/features/tax/types';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Controller,
@@ -83,8 +86,6 @@ const LOCATION_OPTIONS = [
   { value: 'OTHER', label: 'Other (municipality / rural)' },
 ];
 
-const ASSESSMENT_YEAR = '2025-26';
-
 const DEFAULT_VALUES: TaxFormValues = {
   category: 'GENERAL',
   location: 'DHAKA_CHITTAGONG_CITY_CORP',
@@ -142,7 +143,17 @@ function serverErrorMessage(e: unknown): string {
   return 'Could not reach the server. Is the backend running?';
 }
 
-export function TaxCalculatorForm() {
+type TaxCalculatorFormProps = {
+  /** Assessment year sent in the calculate payload. Omitted → backend uses latest. */
+  assessmentYear?: string;
+  /** Selected year's rule set; used only to label the binding rebate leg. */
+  rules?: TaxRulesResponse;
+};
+
+export function TaxCalculatorForm({
+  assessmentYear,
+  rules,
+}: TaxCalculatorFormProps = {}) {
   const { token, isRestoring } = useAuth();
   const {
     register,
@@ -184,7 +195,7 @@ export function TaxCalculatorForm() {
     setServerError(null);
     setSaved(false);
     try {
-      const payload = { assessmentYear: ASSESSMENT_YEAR, ...values };
+      const payload = { assessmentYear, ...values };
       const response = token
         ? await apiPostAuth<TaxCalculationResponse>(
             '/api/calculators/tax/calculate',
@@ -328,7 +339,20 @@ export function TaxCalculatorForm() {
         </p>
       )}
 
-      {result && <TaxBreakdown result={result} />}
+      {result && (
+        <TaxBreakdown
+          result={result}
+          rebateConfig={
+            rules
+              ? {
+                  taxableFraction: rules.rebateTaxableFraction,
+                  eligibleFraction: rules.rebateEligibleFraction,
+                  cap: rules.rebateCap,
+                }
+              : undefined
+          }
+        />
+      )}
 
       {saved && (
         <p
