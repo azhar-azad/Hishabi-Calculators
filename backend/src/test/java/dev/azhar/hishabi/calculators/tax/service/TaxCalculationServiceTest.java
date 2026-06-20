@@ -323,6 +323,45 @@ class TaxCalculationServiceTest {
         assertSlab(resp.slabs().get(4), 4, "0.00", "0.00"); // unused
     }
 
+    @Test
+    void workedExampleForAy2026_27ProducesNetTax75200() {
+        // PLAN.md §12.3 — same inputs as §10.8 under the AY 2026-27 rule set.
+        // Inputs: basic 1,611,000; Sanchay Patra 200,000 + DPS 120,000; GENERAL; Dhaka; AIT 0.
+        TaxCalculationRequest request =
+                new TaxCalculationRequest(
+                        "2026-27",
+                        TaxpayerCategory.GENERAL,
+                        Location.DHAKA_CHITTAGONG_CITY_CORP,
+                        0,
+                        basicOnly("1611000"),
+                        investments("200000", "120000", "0", "0", "0", "0", "0"),
+                        BigDecimal.ZERO);
+
+        TaxCalculationResponse resp = service.calculate(fullRuleSet2026(), "2026-27", request);
+
+        assertThat(resp.totalEarnings()).isEqualByComparingTo("1611000.00");
+        assertThat(resp.taxFreeSalaryExemption()).isEqualByComparingTo("450000.00");
+        assertThat(resp.taxableIncome()).isEqualByComparingTo("1161000.00");
+        assertThat(resp.effectiveFirstSlabThreshold()).isEqualByComparingTo("375000.00");
+        assertThat(resp.grossTax()).isEqualByComparingTo("107200.00");
+        assertThat(resp.eligibleInvestment()).isEqualByComparingTo("320000.00");
+        assertThat(resp.rebate()).isEqualByComparingTo("32000.00");
+        assertThat(resp.afterRebate()).isEqualByComparingTo("75200.00");
+        assertThat(resp.minimumTaxFloor()).isEqualByComparingTo("5000.00");
+        assertThat(resp.minimumTaxApplied()).isFalse();
+        assertThat(resp.taxAfterFloor()).isEqualByComparingTo("75200.00");
+        assertThat(resp.advanceIncomeTaxPaid()).isEqualByComparingTo("0.00");
+        assertThat(resp.netTax()).isEqualByComparingTo("75200.00");
+
+        // per-slab breakdown (§12.3 table)
+        assertThat(resp.slabs()).hasSize(7);
+        assertSlab(resp.slabs().get(0), 0, "375000.00", "0.00"); // 0% band
+        assertSlab(resp.slabs().get(1), 1, "300000.00", "30000.00"); // 10%
+        assertSlab(resp.slabs().get(2), 2, "400000.00", "60000.00"); // 15%
+        assertSlab(resp.slabs().get(3), 3, "86000.00", "17200.00"); // 20% (partial)
+        assertSlab(resp.slabs().get(4), 4, "0.00", "0.00"); // unused
+    }
+
     private static RuleSet ruleSet() {
         RuleSet rs = new RuleSet();
         rs.setSalaryExemptionCap(new BigDecimal(("450000.00")));
@@ -392,6 +431,38 @@ class TaxCalculationServiceTest {
         rs.getSlabs().add(slab(5, "2000000.00", "0.2500"));
         rs.getSlabs().add(slab(6, null, "0.3000"));
         rs.getCategoryThresholds().add(categoryThreshold(TaxpayerCategory.GENERAL, "350000.00"));
+        rs.getCategoryThresholds().add(categoryThreshold(TaxpayerCategory.WOMAN, "400000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.SENIOR_65_PLUS, "400000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.PHYSICALLY_MENTALLY_DISABLED, "475000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.GAZETTED_FREEDOM_FIGHTER, "500000.00"));
+        rs.getCategoryThresholds()
+                .add(categoryThreshold(TaxpayerCategory.THIRD_GENDER, "475000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.DHAKA_CHITTAGONG_CITY_CORP, "5000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.OTHER_CITY_CORP, "4000.00"));
+        rs.getMinimumTaxFloors().add(floor(Location.OTHER, "3000.00"));
+        return rs;
+    }
+
+    private static RuleSet fullRuleSet2026() {
+        RuleSet rs = new RuleSet();
+        rs.setSalaryExemptionCap(new BigDecimal("450000.00"));
+        rs.setSalaryExemptionDivisor(3);
+        rs.setDisabledChildThresholdBonus(new BigDecimal("50000.00"));
+        rs.setRebateTaxableFraction(new BigDecimal("0.0300"));
+        rs.setRebateEligibleFraction(new BigDecimal("0.1000"));
+        rs.setRebateCap(new BigDecimal("750000.00"));
+        rs.setSanchayPatraCap(new BigDecimal("500000.00"));
+        rs.setDpsCap(new BigDecimal("120000.00"));
+        rs.getSlabs().add(slab(1, "300000.00", "0.1000"));
+        rs.getSlabs().add(slab(2, "400000.00", "0.1500"));
+        rs.getSlabs().add(slab(3, "500000.00", "0.2000"));
+        rs.getSlabs().add(slab(4, "425000.00", "0.2500"));
+        rs.getSlabs().add(slab(5, "2000000.00", "0.3000"));
+        rs.getSlabs().add(slab(6, null, "0.3500"));
+        rs.getCategoryThresholds().add(categoryThreshold(TaxpayerCategory.GENERAL, "375000.00"));
         rs.getCategoryThresholds().add(categoryThreshold(TaxpayerCategory.WOMAN, "400000.00"));
         rs.getCategoryThresholds()
                 .add(categoryThreshold(TaxpayerCategory.SENIOR_65_PLUS, "400000.00"));

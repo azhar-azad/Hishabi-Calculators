@@ -51,7 +51,8 @@ public class SecurityConfig {
                                                 "/api/auth/signup",
                                                 "/api/auth/login",
                                                 "/api/calculators/tax/rules/**",
-                                                "/api/calculators/tax/calculate")
+                                                "/api/calculators/tax/calculate",
+                                                "/api/calculators/tax/years")
                                         .permitAll()
                                         .anyRequest()
                                         .authenticated())

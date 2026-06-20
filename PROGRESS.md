@@ -38,15 +38,15 @@ NBR released the AY 2026-27 individual schedule with changed values (General thr
 - [x] Commit `chore(docs): archive phases 5-6, document AY 2026-27 plan + rules`; push
 
 ### 7.1 — Backend: seed AY 2026-27 + years endpoint *(high-risk: tax math + migration)*
-- [ ] `V7__seed_ay_2026_27.sql`: new `tax_rule_set` id=2 (populate **every** column incl. `sanchay_patra_cap`/`dps_cap` from V3); `ALTER ... RESTART WITH 3`; 6 slabs, 6 thresholds (General 375k), 3 floors for rule_set_id=2; `tax_assessment_year ('2026-27', 2)`
-- [ ] `GET /api/calculators/tax/years` — available year labels, newest first (facade + controller); add to Spring Security public allow-list
-- [ ] Test: `TaxRuleEntitiesPersistenceTest` — 2026-27 rule set matches new values; 2026-27 → different RuleSet (id=2) than 2025-26 (id=1); 2024-25 + 2025-26 still share id=1
-- [ ] Test: `TaxCalculationServiceTest` — worked example for 2026-27 → gross 107,200, rebate 32,000, **net 75,200** + per-slab breakdown
-- [ ] Test: fix latest-default flip — pin existing `netTax=56820` controller test to explicit `2025-26`; add null-year-resolves-to-2026-27 (→ 75,200) test
-- [ ] Test: `TaxRulesControllerTest.returnsFullRuleSetForAy2026_27`; years-endpoint test (public, returns `[2026-27, 2025-26, 2024-25]`)
-- [ ] `./mvnw verify` green
-- [ ] Self code-review (high — tax math) + independent `code-reviewer` subagent on the diff
-- [ ] Commit `feat(tax): seed AY 2026-27 rules + years endpoint`; push
+- [x] `V7__seed_ay_2026_27.sql`: new `tax_rule_set` id=2 (populate **every** column incl. `sanchay_patra_cap`/`dps_cap` from V3); `ALTER ... RESTART WITH 3`; 6 slabs, 6 thresholds (General 375k), 3 floors for rule_set_id=2; `tax_assessment_year ('2026-27', 2)`
+- [x] `GET /api/calculators/tax/years` — available year labels, newest first (facade + controller); add to Spring Security public allow-list
+- [x] Test: `TaxRuleEntitiesPersistenceTest` — 2026-27 rule set matches new values; 2026-27 → different RuleSet (id=2) than 2025-26 (id=1); 2024-25 + 2025-26 still share id=1
+- [x] Test: `TaxCalculationServiceTest` — worked example for 2026-27 → gross 107,200, rebate 32,000, **net 75,200** + per-slab breakdown
+- [x] Test: fix latest-default flip — pin existing `netTax=56820` controller test to explicit `2025-26`; add null-year-resolves-to-2026-27 (→ 75,200) test
+- [x] Test: `TaxRulesControllerTest.returnsFullRuleSetForAy2026_27`; years-endpoint test (public, returns `[2026-27, 2025-26, 2024-25]`)
+- [x] `./mvnw verify` green — 100/100 tests
+- [x] Self code-review (high — tax math, `/code-review`) + independent cold-context reviewer (recomputed net 75,200, all values match §12) — no findings
+- [x] Commit `feat(tax): seed AY 2026-27 rules + years endpoint`; push
 
 ### 7.2 — Frontend: assessment-year selector + copy + rebate-label fix
 - [ ] New `features/tax/TaxCalculator.tsx` client wrapper: fetch `/years`, hold `selectedYear` (default newest), shadcn `Select`; fetch rules once and pass to `TaxRulesView` + `TaxCalculatorForm`

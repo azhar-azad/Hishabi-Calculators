@@ -51,9 +51,9 @@ class TaxCalculationControllerTest {
     @Autowired private ObjectMapper objectMapper;
 
     @Test
-    void calculateWorkedExampleReturnsNetTax56820() throws Exception {
-        // §10.8 inputs, assessmentYear omitted → resolves to the latest (2025-26)
-        String body = objectMapper.writeValueAsString(workedExampleRequest(null));
+    void calculateForAy2025_26ReturnsNetTax56820() throws Exception {
+        // §10.8 inputs, pinned to AY 2025-26 (no longer the default once 2026-27 exists)
+        String body = objectMapper.writeValueAsString(workedExampleRequest("2025-26"));
 
         MvcResult result =
                 mockMvc.perform(
@@ -68,6 +68,26 @@ class TaxCalculationControllerTest {
                         result.getResponse().getContentAsString(), TaxCalculationResponse.class);
         assertThat(resp.netTax()).isEqualByComparingTo("56820.00");
         assertThat(resp.assessmentYear()).isEqualTo("2025-26");
+    }
+
+    @Test
+    void calculateDefaultsToLatestYear2026_27() throws Exception {
+        // §12.3 — assessmentYear omitted → resolves to the latest (now 2026-27) → net 75,200
+        String body = objectMapper.writeValueAsString(workedExampleRequest(null));
+
+        MvcResult result =
+                mockMvc.perform(
+                                post("/api/calculators/tax/calculate")
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(body))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        TaxCalculationResponse resp =
+                objectMapper.readValue(
+                        result.getResponse().getContentAsString(), TaxCalculationResponse.class);
+        assertThat(resp.netTax()).isEqualByComparingTo("75200.00");
+        assertThat(resp.assessmentYear()).isEqualTo("2026-27");
     }
 
     @Test

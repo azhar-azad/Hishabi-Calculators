@@ -91,6 +91,45 @@ class TaxRulesControllerTest {
     }
 
     @Test
+    void returnsFullRuleSetForAy2026_27() throws Exception {
+        MvcResult result =
+                mockMvc.perform(get("/api/calculators/tax/rules/{ay}", "2026-27"))
+                        .andExpect(status().isOk())
+                        .andReturn();
+
+        TaxRulesResponse rules =
+                objectMapper.readValue(
+                        result.getResponse().getContentAsString(), TaxRulesResponse.class);
+
+        // §12.1 — changed rebate config vs §10
+        assertThat(rules.assessmentYear()).isEqualTo("2026-27");
+        assertThat(rules.rebateEligibleFraction()).isEqualByComparingTo("0.10");
+        assertThat(rules.rebateCap()).isEqualByComparingTo("750000");
+
+        // §12.2 — new slab ladder: ordinal 1 = 300k@10% ... ordinal 6 = null-width@35%
+        assertThat(rules.slabs()).hasSize(6);
+        assertThat(rules.slabs().get(0).ordinal()).isEqualTo(1);
+        assertThat(rules.slabs().get(0).width()).isEqualByComparingTo("300000");
+        assertThat(rules.slabs().get(0).rate()).isEqualByComparingTo("0.10");
+        assertThat(rules.slabs().get(5).width()).isNull();
+        assertThat(rules.slabs().get(5).rate()).isEqualByComparingTo("0.35");
+
+        // §12.1 — General threshold raised to 375,000
+        assertThat(rules.categoryThresholds().get(0).category())
+                .isEqualTo(TaxpayerCategory.GENERAL);
+        assertThat(rules.categoryThresholds().get(0).amount()).isEqualByComparingTo("375000");
+    }
+
+    @Test
+    void yearsEndpointListsAllYearsNewestFirstAndIsPublic() throws Exception {
+        mockMvc.perform(get("/api/calculators/tax/years"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0]").value("2026-27"))
+                .andExpect(jsonPath("$[1]").value("2025-26"))
+                .andExpect(jsonPath("$[2]").value("2024-25"));
+    }
+
+    @Test
     void unknownYearReturns404() throws Exception {
         mockMvc.perform(get("/api/calculators/tax/rules/{ay}", "1999-00"))
                 .andExpect(status().isNotFound())
