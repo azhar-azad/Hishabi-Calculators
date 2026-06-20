@@ -1,6 +1,7 @@
 package dev.azhar.hishabi.calculators.tax.repository;
 
 import dev.azhar.hishabi.calculators.tax.model.AssessmentYear;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,4 +11,7 @@ public interface AssessmentYearRepository extends JpaRepository<AssessmentYear, 
 
     /** Latest assessment year by label. Lexicographic order is correct for the "YYYY-YY" format. */
     Optional<AssessmentYear> findTopByOrderByLabelDesc();
+
+    /** All assessment years, newest first. Lexicographic order is correct for "YYYY-YY". */
+    List<AssessmentYear> findAllByOrderByLabelDesc();
 }

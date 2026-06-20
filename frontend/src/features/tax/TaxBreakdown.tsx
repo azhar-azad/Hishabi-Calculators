@@ -9,11 +9,35 @@ function pct(rate: number): string {
   return `${Math.round(rate * 100)}%`;
 }
 
-function rebateLegLabel(r: TaxCalculationResponse): string {
+export type RebateConfig = {
+  taxableFraction: number;
+  eligibleFraction: number;
+  cap: number;
+};
+
+// AY 2025-26 defaults — used only when the rule set hasn't been threaded in
+// (e.g. the form rendered without rules). Real usage passes the selected year's
+// config so the binding leg is labelled correctly for any year.
+const LEGACY_REBATE: RebateConfig = {
+  taxableFraction: 0.03,
+  eligibleFraction: 0.15,
+  cap: 1_000_000,
+};
+
+function rebateLegLabel(
+  r: TaxCalculationResponse,
+  config: RebateConfig = LEGACY_REBATE,
+): string {
   const candidates = [
-    { label: '3% of taxable income', value: r.taxableIncome * 0.03 },
-    { label: '15% of eligible investment', value: r.eligibleInvestment * 0.15 },
-    { label: 'rebate cap', value: 1_000_000 },
+    {
+      label: `${pct(config.taxableFraction)} of taxable income`,
+      value: r.taxableIncome * config.taxableFraction,
+    },
+    {
+      label: `${pct(config.eligibleFraction)} of eligible investment`,
+      value: r.eligibleInvestment * config.eligibleFraction,
+    },
+    { label: 'rebate cap', value: config.cap },
   ];
   return candidates.reduce((a, b) => (a.value <= b.value ? a : b)).label;
 }
@@ -37,9 +61,9 @@ function Row({
   );
 }
 
-type Props = { result: TaxCalculationResponse };
+type Props = { result: TaxCalculationResponse; rebateConfig?: RebateConfig };
 
-export function TaxBreakdown({ result }: Props) {
+export function TaxBreakdown({ result, rebateConfig }: Props) {
   return (
     <Card
       aria-live="polite"
@@ -81,7 +105,7 @@ export function TaxBreakdown({ result }: Props) {
 
         <div className="border-b border-zinc-200 pb-3 dark:border-zinc-700">
           <Row
-            label={`Investment rebate (bound: ${rebateLegLabel(result)})`}
+            label={`Investment rebate (bound: ${rebateLegLabel(result, rebateConfig)})`}
             value={`(${fmt(result.rebate)}) BDT`}
           />
           <Row

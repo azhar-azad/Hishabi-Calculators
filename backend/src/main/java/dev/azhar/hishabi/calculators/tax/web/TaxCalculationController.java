@@ -6,6 +6,7 @@ import dev.azhar.hishabi.calculators.tax.model.TaxHistoryItemResponse;
 import dev.azhar.hishabi.calculators.tax.model.TaxRulesResponse;
 import dev.azhar.hishabi.calculators.tax.service.TaxCalculationFacade;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,6 +35,11 @@ public class TaxCalculationController {
     @GetMapping("/rules/{assessmentYear}")
     public TaxRulesResponse rules(@PathVariable String assessmentYear) {
         return facade.getRules(assessmentYear);
+    }
+
+    @GetMapping("/years")
+    public List<String> years() {
+        return facade.listYears();
     }
 
     @GetMapping("/history")

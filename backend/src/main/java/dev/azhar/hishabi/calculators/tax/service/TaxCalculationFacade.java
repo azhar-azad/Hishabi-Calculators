@@ -79,6 +79,13 @@ public class TaxCalculationFacade {
     }
 
     @Transactional(readOnly = true)
+    public List<String> listYears() {
+        return assessmentYears.findAllByOrderByLabelDesc().stream()
+                .map(AssessmentYear::getLabel)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<TaxHistoryItemResponse> listHistory(Pageable pageable) {
         User user =
                 resolveAuthenticatedUser()

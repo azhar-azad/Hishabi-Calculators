@@ -21,7 +21,7 @@ export default function Home() {
             >
               <div className="font-medium">Income Tax</div>
               <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Bangladeshi individual income tax - AY 2025-26
+                Bangladeshi individual income tax
               </div>
             </Link>
           </li>

@@ -16,21 +16,27 @@ vi.mock('@/context/AuthContext', () => ({
   }),
 }));
 
-describe('Tax calculator page', () => {
-  it('renders the AY 2025-26 income tax heading', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
+// The page renders the TaxCalculator wrapper, which fetches the year list and
+// then the rule set for the selected year.
+function stubApi() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string) => {
+      const body = url.includes('/years')
+        ? ['2026-27', '2025-26', '2024-25']
+        : { slabs: [], categoryThresholds: [], minimumTaxFloors: [] };
+      return Promise.resolve({
         ok: true,
         status: 200,
-        text: async () =>
-          JSON.stringify({
-            slabs: [],
-            categoryThresholds: [],
-            minimumTaxFloors: [],
-          }),
-      }),
-    );
+        text: async () => JSON.stringify(body),
+      });
+    }),
+  );
+}
+
+describe('Tax calculator page', () => {
+  it('renders the income tax heading and the calculator', async () => {
+    stubApi();
 
     render(<TaxCalculatorPage />);
 
@@ -39,7 +45,6 @@ describe('Tax calculator page', () => {
       name: /Bangladeshi Income Tax/i,
     });
     expect(heading).toBeDefined();
-    expect(heading.textContent).toContain('2025-26');
     // the form is wired into the page
     expect(screen.getByRole('button', { name: /Calculate/i })).toBeDefined();
   });
