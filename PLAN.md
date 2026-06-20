@@ -47,6 +47,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | Dev DB seeding           | Flyway runs on H2 (PG mode); `ddl-auto: validate` — supersedes "Flyway off on H2" | 2026-06-01 |
 | Frontend form stack      | react-hook-form + zod (+ shadcn Input/Select/Label/Card) | 2026-06-02 |
 | Calc service structure   | Step methods (pure functions, local finals) — not Chain-of-Responsibility. CoR is a poor fit for fixed-order money math; typed returns are clearer than a mutable shared context. Revisit only if wealth surcharge adds year-varying steps. | 2026-05-30 |
+| AY 2026-27 rules added    | New `RuleSet` (id=2) — General threshold 350k→375k, new slab ladder (no 5% band, 35% top rate), rebate eligible-fraction 15%→10%, rebate cap 1,000,000→750,000. Frontend gains a year selector + `/years` endpoint. See §12. | 2026-06-20 |
 
 Add a new row whenever a decision is made or changed.
 
@@ -172,12 +173,11 @@ Things consciously punted from MVP. Track here so we don't lose them.
 | Business / professional income | MVP models salary only. Other heads of income require their own input flows and (sometimes) different rates. |
 | Capital gains & other special-rate incomes | Same as above. |
 | Tax return PDF / NBR filing format | Long-tail feature; nice-to-have only if the calculator gets shared widely. |
-| Multi-year historical calculation UI | Schema already supports multiple AYs; only the seed data is single-year. UI deferred until there's a second year to pick from. |
+| ~~Multi-year historical calculation UI~~ | **Done (Phase 7).** With AY 2026-27 added as a genuinely different rule set, the frontend gained an assessment-year selector (fed by `GET /api/calculators/tax/years`). |
 | Mobile app | Backend kept REST-clean so any client (React Native / Flutter / native) is viable when we get there. |
 | i18n (Bengali + English) | Likely needed if shared beyond colleagues. Skip for personal-use MVP. |
 | Bruno: add `API-Collection/README.md` | One-liner: "Bruno collection — open in Bruno, point at a running backend." |
 | Bruno: rename folder `API-Collection/` → `api-collection/` | Lowercase, for consistency with `backend/` / `frontend/`. Do as a small standalone commit/PR. |
-| **Tech debt — `TaxBreakdown.rebateLegLabel` hardcodes AY 2025-26 constants** | `rebateLegLabel` in `TaxBreakdown.tsx` hardcodes 0.03, 0.15, and 1,000,000. When AY 2026-27 arrives with different fractions/cap, it will silently mislabel the binding leg. Fix: pass `TaxRulesResponse` rebate fields as props to `TaxBreakdown`, or add `bindingRebateLeg` field to the backend `TaxCalculationResponse`. |
 | **Tech debt — `pct` and `fmt` helpers duplicated** | `TaxBreakdown.tsx` and `TaxRulesView.tsx` each define their own `pct()` (and effectively `fmt()`). Extract to `features/tax/formatters.ts` when a third component needs them. |
 | **Tech debt — no `AbortController` on unmount in `TaxRulesView`** | The `useEffect` fetch in `TaxRulesView.tsx` has no abort signal. Harmless in practice (the component rarely unmounts mid-fetch), but will trigger a React dev-mode warning if it does. Low priority. |
 | **Tech debt — `/dev/health` page has no prod guard** | `app/dev/health/page.tsx` renders in production. Add a `NODE_ENV !== 'production'` early return (or remove the page) before Phase 6 deploy. |
@@ -324,3 +324,58 @@ Matches the Excel's `K52` exactly.
 ### 10.10 Rounding policy
 
 Monetary values are computed at **2 decimal places (paisa), HALF_UP** — the source Excel keeps paisa precision (decided 2026-05-29). The policy is centralized in `Money` (in the `tax.service` package): `SCALE = 2`, `ROUNDING = HALF_UP`. Divisions (e.g. `totalEarnings / 3`) and rate multiplications round to this scale. If the source spreadsheet's rounding is ever found to differ (e.g. whole-taka), change it in that one place. The §10.8 worked example is all whole-taka, so it does not exercise fractional rounding — that confidence comes from the policy being explicit + centralized.
+
+## 12. Tax Rules — AY 2026-27 (Bangladesh, individual)
+
+Source: user (NBR AY 2026-27 individual schedule). Seeded as a **separate `RuleSet` (id=2)** referenced by `tax_assessment_year` label `'2026-27'`. The AY 2024-25 / 2025-26 rule set (id=1, §10) is unchanged and stays seeded. Same engine, same six steps (§10.2–§10.7) — only the data differs.
+
+### 12.1 What changed vs AY 2025-26 (§10)
+
+| Parameter | AY 2025-26 (§10) | AY 2026-27 | Changed? |
+| --- | ---: | ---: | :---: |
+| Salary exemption divisor / cap | 3 / 450,000 | 3 / 450,000 | no |
+| General tax-free threshold | 350,000 | **375,000** | **yes** |
+| Woman / Senior 65+ / Disabled / Freedom Fighter / Third Gender | 400k / 400k / 475k / 500k / 475k | same | no |
+| Disabled-child bonus | +50,000 / child | +50,000 / child | no |
+| Rebate: taxable-income fraction | 3% | 3% | no |
+| Rebate: eligible-investment fraction | 15% | **10%** | **yes** |
+| Rebate: cap | 1,000,000 | **750,000** | **yes** |
+| Investment caps (Sanchay Patra 500k, DPS 120k) | as §10.5 | same | no |
+| Minimum-tax floors (5k / 4k / 3k) | as §10.6 | same | no |
+
+### 12.2 Slab structure (AY 2026-27)
+
+The 5% band is gone and the top rate rises to 35%. The 0% band is the per-taxpayer effective first-slab threshold (§10.3, synthesized at calc time — not stored). Stored **paying** slabs (DB ordinals 1–6):
+
+| # | Width (BDT) | Rate |
+| ---: | ---: | ---: |
+| 1 (0% band) | (effective first-slab threshold) | 0% |
+| 2 | 300,000 | 10% |
+| 3 | 400,000 | 15% |
+| 4 | 500,000 | 20% |
+| 5 | 425,000 | 25% |
+| 6 | 2,000,000 | 30% |
+| 7 | (rest) | 35% |
+
+### 12.3 Worked example (AY 2026-27)
+
+Same inputs as §10.8 (basic 1,611,000; Sanchay Patra 200,000 + DPS 120,000; General; Dhaka; AIT 0), under the AY 2026-27 rule set:
+
+| Step | Value |
+| --- | ---: |
+| Total earnings | 1,611,000 |
+| Tax-free salary = MIN(1,611,000/3, 450,000) | 450,000 |
+| Taxable income | 1,161,000 |
+| Effective first-slab threshold (General) | 375,000 |
+| Slab 1: 375,000 @ 0% | 0 |
+| Slab 2: 300,000 @ 10% | 30,000 |
+| Slab 3: 400,000 @ 15% | 60,000 |
+| Slab 4: 86,000 @ 20% | 17,200 |
+| Gross tax | 107,200 |
+| Rebate = MIN(3%×1,161,000, 10%×320,000, 750,000) = MIN(34,830, 32,000, 750,000) | 32,000 |
+| After rebate | 75,200 |
+| Minimum tax floor (Dhaka, 5,000) | not binding |
+| AIT credit | 0 |
+| **Net tax** | **75,200** |
+
+This is the AY 2026-27 regression anchor (`TaxCalculationServiceTest`).

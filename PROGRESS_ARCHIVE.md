@@ -1,4 +1,4 @@
-# Calculators — Progress Archive (Phases 0–4)
+# Calculators — Progress Archive (Phases 0–6)
 
 Verbatim record of completed phases. Not auto-loaded in Claude sessions — read only when investigating a historical decision. Live tracking is in [PROGRESS.md](./PROGRESS.md).
 
@@ -293,3 +293,131 @@ _Rules derived from user's Excel — see PLAN.md §10. Pure-function service (no
 - [x] Manual verify in browser at 375px / 768px / desktop — all three viewports confirmed via dev-server preview screenshots
 - [x] Self code-review (medium) — 7-angle review, 1 confirmed bug (space regression, fixed), 1 non-blocking cleanup (use `cn()` for Row className — deferred). No other findings.
 - [x] Commit `style(frontend-tax): responsive layout polish (Slice 4.7)`; push — committed as `2760266`, pushed to `origin/code`
+
+---
+
+## Phase 5 — Auth + history persistence
+
+### 5.1 — Users table + entity
+- [x] Migration: `users` (id, email unique, password_hash, created_at)
+- [x] JPA entity `User` + repository
+- [x] Test: persist + lookup by email via Testcontainers
+- [x] Self code-review (high — schema)
+- [x] Commit `feat(auth): users table + entity`; push
+
+### 5.2 — Signup endpoint (BCrypt)
+- [x] `POST /api/auth/signup` — validates email + password strength, BCrypt hash, returns user id (not token yet)
+- [x] Test: happy path; duplicate-email rejected with 409
+- [x] Self code-review (high — auth)
+- [x] Commit `feat(auth): signup endpoint`; push
+
+### 5.3 — Login endpoint + JWT issuance
+- [x] `POST /api/auth/login` — validates credentials, issues JWT (HS256, configurable secret + expiry)
+- [x] Test: happy path returns token; wrong password → 401
+- [x] Self code-review (high — auth)
+- [x] Commit `feat(auth): login + JWT issuance`; push
+
+> **Known gap:** Issued tokens are not invalidated on password change or account deletion (no revocation
+> mechanism). Any future account-mutation endpoint must revisit this — either shorten token TTL +
+> add refresh tokens, or introduce a lightweight denylist (jti blocklist). UUID-based subject and
+> `iss`/`aud` claims are deferred to Slice 5.4.
+
+### 5.4 — Spring Security stateless filter chain
+- [x] Configure stateless security: JWT validation filter, public allow-list (health, calculate, rules, signup, login)
+- [x] `GET /api/account/me` — protected endpoint (returns authenticated user's email; also used as integration-test anchor for Slice 5.9)
+- [x] Test: protected endpoint without token → 401; with valid token → 200; with expired/malformed token → 401; public health endpoint → 200
+- [x] Self code-review (high — auth)
+- [x] Commit `feat(auth): JWT filter + security config`; push
+
+### 5.5 — Calculations history table
+- [x] Migration: `calculations` (id, user_id FK, assessment_year, request_json, response_json, created_at)
+- [x] JPA entity + repository (moved to `platform/history/` — history is a platform concern per PLAN.md §4)
+- [x] Test: persist + fetch by user via Testcontainers; paginated query tested
+- [x] Self code-review (medium)
+- [x] Commit `feat(history): calculations table + entity`; push
+
+### 5.5.1 — Add calculator_type discriminator (pre-5.6 schema fix)
+- [x] Flyway V6: add `calculator_type VARCHAR(20) NOT NULL`; drop `assessment_year` (retained in request_json)
+- [x] `CalculatorType` enum (TAX, ZAKAT) in platform/history
+- [x] `Calculation` entity updated; `CalculationRepository` consolidates to two paginated methods
+- [x] Tests updated: consolidated history + type-filtered query both covered
+- [x] Commit `feat(history): calculator_type discriminator (Slice 5.5.1)`; push
+
+### 5.6 — Persist calculation when logged-in
+- [x] In tax calculate controller: if authenticated, save calculation row
+- [x] Test: unauthenticated → not saved; authenticated → saved with correct user_id + non-blank JSON
+- [x] Self code-review (medium) — fixed stale Javadoc, replaced "anonymousUser" literal with `instanceof AnonymousAuthenticationToken`, added JSON content assertions
+- [x] Fix: Surefire was silently skipping all `*IT.java` classes — added explicit `<includes>` in pom.xml (SecurityFilterChainIT also now runs for the first time)
+- [x] Commit `feat(history): save calculation for logged-in users`; push
+
+### 5.7 — List calculation history
+- [x] `GET /api/calculators/tax/history` — paginated, current user only
+- [x] Test: returns own rows only; pagination respected; unauthenticated → 401
+- [x] Self code-review (medium) — fixed deleted-user 404→401, degraded-entry on corrupt row, extracted `resolveAuthenticatedUser()` helper, removed dead `findByUserIdOrderByCreatedAtDesc`
+- [x] Commit `feat(history): list endpoint`; push
+
+### 5.8 — Frontend signup page
+- [x] `app/account/signup/page.tsx` with form, validation, error handling
+- [x] Test: form renders; mocked API success redirects to login; 409 duplicate-email error
+- [x] Self code-review (medium) — fixed noValidate, aria-live on field errors, mode: 'onTouched', non-409 ApiError body.message surfaced, test payload assertion added
+- [x] Commit `feat(frontend-auth): signup page`; push
+
+### 5.9 — Frontend login + auth context
+- [x] `app/account/login/page.tsx`; React context (user/token/isRestoring, localStorage persistence, TOKEN_KEY/EMAIL_KEY exported)
+- [x] API client attaches token: `apiGetAuth`/`apiPostAuth` with `string | null` guard; rejects with ApiError(401) when null
+- [x] Test: login flow stores user; logout clears it; isRestoring transitions false after effect
+- [x] Self code-review (high — auth client) — added res.token guard, isRestoring, exported keys, TODO for expiry + shared error handler, token null-guard in api functions
+- [x] Commit `feat(frontend-auth): login + auth context`; push
+
+### 5.10 — "Save calculation" CTA when logged in
+- [x] Tax page shows save indicator / success toast when authenticated
+- [x] Test: logged-out → no save UI; logged-in → CTA visible
+- [x] Self code-review (medium) — dropped broken /account/history link (Slice 5.11 not built yet), reset saved on field edit via watch subscription, removed dead setSaved in catch, disabled submit during isRestoring
+- [x] Commit `feat(frontend-tax): save indicator for logged-in users`; push
+
+### 5.11 — History page
+- [x] `app/account/history/page.tsx` — list of past calculations, click to re-open with inputs prefilled
+- [x] Test: renders list from mocked API; click navigates to tax page with state
+- [x] Self code-review (medium) — fixed null crash on degraded entries (response: null type + guarded render), imported PREFILL_KEY from single source, cleared loading on redirect path, 401 → redirect to login instead of error message
+- [x] Commit `feat(frontend-auth): history page`; push
+
+---
+
+## Phase 6 — Deployment
+
+### 6.1 — Choose hosting provider *(decision — no commit)*
+- [x] Compare Render / Railway / Fly.io free tiers at this moment; pick one
+- [x] Record decision in PLAN.md §2
+> Backend: Render (free, spin-down). Frontend: Vercel Hobby (free). DB: Neon (free, 0.5 GB). UptimeRobot keep-alive to prevent Render cold starts.
+
+### 6.2 — Backend Dockerfile
+- [x] Multi-stage Dockerfile (Maven build → slim JRE runtime), exposes 8080
+- [x] Verify `docker build` + `docker run` works locally; `/api/health` reachable — all 6 steps passed (build, run, health, non-root user, image size, stop)
+- [x] Self code-review (medium) — fixed JSON-array ENTRYPOINT (backslash continuation is invalid), lowered MaxRAMPercentage 75→60 (non-heap headroom on 256 MB), wildcard JAR copy, non-root user, expanded .dockerignore
+- [x] Commit `chore(deploy): backend Dockerfile`; push
+
+### 6.3 — Provision managed Postgres
+- [x] Create Postgres instance on chosen provider — Neon, region us-west-2
+- [x] Capture connection details into a secrets store (provider's env-var UI) — stored in `backend/.env.production` (gitignored)
+- [x] (no commit — infra setup)
+
+### 6.4 — Backend env config + deploy
+- [x] Set env vars: `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `APP_CORS_ALLOWED_ORIGINS=*` (placeholder — update after 6.5), `SPRING_PROFILES_ACTIVE=prod`
+- [x] Add a fail-fast `EnvironmentPostProcessor` — throws at startup on Render if `SPRING_PROFILES_ACTIVE` is missing, is `dev`, or has both `prod` and `dev` active; 94/94 tests green
+- [x] Deploy backend image; service live on Render (`code` branch); Flyway V1–V6 ran; `/api/health` UP
+- [x] Note: Render branch set to `code` for now; switch to `main` after Phase 6 PR is merged
+
+### 6.5 — Frontend deploy
+- [x] Deploy Next.js on Vercel Hobby (free); `NEXT_PUBLIC_API_URL` set to Render backend
+- [x] Fixed Next.js 16 / Vercel runtime compat: added `output: 'export'` to `next.config.ts` + `vercel.json` with `framework: null` to serve static `out/` directly
+- [x] Verify landing page loads — home page confirmed live
+- [x] Updated `APP_CORS_ALLOWED_ORIGINS` on Render to `https://hishabi-calculators.vercel.app`; redeployed — CORS preflight now passes
+
+### 6.6 — Production smoke test
+- [x] Hit `POST /api/calculators/tax/calculate` from prod frontend with PLAN.md §10.8 inputs; confirmed net tax = 56,820
+- [x] Sign up + log in + save calculation + view history
+- [x] (no commit — verification)
+
+### 6.7 — Uptime check
+- [x] UptimeRobot configured — HTTP monitor on `/api/health`, 5-minute interval
+- [x] (no commit — infra config)
