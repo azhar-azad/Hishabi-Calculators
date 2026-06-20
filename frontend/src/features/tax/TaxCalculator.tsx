@@ -79,22 +79,33 @@ export function TaxCalculator() {
     <div className="flex w-full max-w-3xl flex-col items-center gap-8">
       <div className="flex w-full flex-col gap-1">
         <Label htmlFor="assessmentYear">Assessment year</Label>
-        <Select
-          value={selectedYear ?? undefined}
-          onValueChange={setSelectedYear}
-          disabled={!years || years.length === 0}
-        >
-          <SelectTrigger id="assessmentYear" className="w-full sm:w-64">
-            <SelectValue placeholder="Loading years…" />
-          </SelectTrigger>
-          <SelectContent>
-            {(years ?? []).map((y) => (
-              <SelectItem key={y} value={y}>
-                AY {y}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {years && years.length > 0 ? (
+          // Render the Select only once the years are loaded: base-ui resolves the
+          // trigger label from items present at mount, so mounting it with its
+          // items (and the default selection) already in place shows the label.
+          <Select
+            value={selectedYear ?? undefined}
+            onValueChange={setSelectedYear}
+          >
+            <SelectTrigger id="assessmentYear" className="w-full sm:w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {years.map((y) => (
+                <SelectItem key={y} value={y}>
+                  AY {y}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <div
+            id="assessmentYear"
+            className="border-input text-muted-foreground flex h-8 w-full items-center rounded-lg border px-2.5 text-sm sm:w-64"
+          >
+            Loading years…
+          </div>
+        )}
       </div>
 
       <TaxCalculatorForm
