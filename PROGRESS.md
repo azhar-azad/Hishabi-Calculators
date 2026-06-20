@@ -61,8 +61,8 @@ NBR released the AY 2026-27 individual schedule with changed values (General thr
 - [x] Live backend (dev/H2, ran V1–V7) verified via HTTP: `/years` → `[2026-27,2025-26,2024-25]`; default calc → 2026-27 net 75,200; `2025-26` → 56,820; `/rules/2026-27` → 10%/750k rebate, 35% top slab, General 375k
 - [x] Browser preview: filled §12.3 inputs → "Tax Breakdown — AY 2026-27", gross 107,200, net 75,200, rebate bound to "10% of eligible investment"; rules table shows 35% top slab + General 375k
 - [x] Fix found in preview: year-selector trigger showed placeholder (async-mounted items) — render Select only after years load (`fix(frontend-tax): show selected year in the selector trigger`)
-- [ ] Confirm CI green after push
-- [ ] PR `code` → `main` (Render auto-runs V7 on next deploy — no manual DB step)
+- [x] CI green after push — Backend (Maven verify) + Frontend (check + build) + Vercel all pass
+- [x] PR `code` → `main` opened (#16); Render auto-runs V7 on next deploy — no manual DB step
 
 ---
 
