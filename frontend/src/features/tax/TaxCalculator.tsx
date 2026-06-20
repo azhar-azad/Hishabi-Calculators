@@ -19,34 +19,45 @@ type RulesState =
   | { kind: 'ok'; rules: TaxRulesResponse }
   | { kind: 'error'; message: string };
 
-/**
- * Shell for the tax calculator: loads the available assessment years, lets the
- * user pick one, fetches that year's rule set once, and threads it down to both
- * the form (for the calculate payload + rebate-label config) and the rules view
- * (for display). Keeping the single rules fetch here avoids the form and the
- * rules view each fetching the same data.
- */
+// After this delay with no response, we tell the user the backend is warming up.
+const WARMING_DELAY_MS = 7_000;
+
 export function TaxCalculator() {
   const [years, setYears] = useState<string[] | null>(null);
+  const [yearsError, setYearsError] = useState(false);
+  const [yearsWarming, setYearsWarming] = useState(false);
+  const [yearsRetry, setYearsRetry] = useState(0);
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [rulesState, setRulesState] = useState<RulesState>({ kind: 'loading' });
 
-  // Load available assessment years once; default to the newest (first).
   useEffect(() => {
     let active = true;
+    setYears(null);
+    setYearsError(false);
+    setYearsWarming(false);
+
+    // Render free tier sleeps after inactivity; first request can take ~60 s.
+    const warmTimer = setTimeout(() => {
+      if (active) setYearsWarming(true);
+    }, WARMING_DELAY_MS);
+
     apiGet<string[]>('/api/calculators/tax/years')
       .then((list) => {
+        clearTimeout(warmTimer);
         if (!active) return;
         setYears(list);
         setSelectedYear((cur) => cur ?? list[0] ?? null);
       })
       .catch(() => {
-        if (active) setYears([]);
+        clearTimeout(warmTimer);
+        if (active) setYearsError(true);
       });
+
     return () => {
       active = false;
+      clearTimeout(warmTimer);
     };
-  }, []);
+  }, [yearsRetry]);
 
   const loadRules = useCallback(async (year: string) => {
     setRulesState({ kind: 'loading' });
@@ -68,43 +79,71 @@ export function TaxCalculator() {
 
   useEffect(() => {
     if (!selectedYear) return;
-    // setState runs after the async fetch resolves, not during render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadRules(selectedYear);
   }, [selectedYear, loadRules]);
 
   const rules = rulesState.kind === 'ok' ? rulesState.rules : undefined;
 
+  function renderYearSelector() {
+    if (years && years.length > 0) {
+      // Render the Select only once years are loaded: base-ui resolves the
+      // trigger label from items present at mount.
+      return (
+        <Select
+          value={selectedYear ?? undefined}
+          onValueChange={setSelectedYear}
+        >
+          <SelectTrigger id="assessmentYear" className="w-full sm:w-64">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map((y) => (
+              <SelectItem key={y} value={y}>
+                AY {y}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+
+    if (yearsError) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-red-600 dark:text-red-400">
+            Could not load assessment years.
+          </span>
+          <button
+            type="button"
+            onClick={() => setYearsRetry((r) => r + 1)}
+            className="rounded border border-zinc-300 px-2.5 py-1 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div
+        id="assessmentYear"
+        className="border-input text-muted-foreground flex h-8 w-full items-center rounded-lg border px-2.5 text-sm sm:w-64"
+      >
+        {yearsWarming ? 'Backend waking up…' : 'Loading years…'}
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full max-w-3xl flex-col items-center gap-8">
       <div className="flex w-full flex-col gap-1">
         <Label htmlFor="assessmentYear">Assessment year</Label>
-        {years && years.length > 0 ? (
-          // Render the Select only once the years are loaded: base-ui resolves the
-          // trigger label from items present at mount, so mounting it with its
-          // items (and the default selection) already in place shows the label.
-          <Select
-            value={selectedYear ?? undefined}
-            onValueChange={setSelectedYear}
-          >
-            <SelectTrigger id="assessmentYear" className="w-full sm:w-64">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {years.map((y) => (
-                <SelectItem key={y} value={y}>
-                  AY {y}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <div
-            id="assessmentYear"
-            className="border-input text-muted-foreground flex h-8 w-full items-center rounded-lg border px-2.5 text-sm sm:w-64"
-          >
-            Loading years…
-          </div>
+        {renderYearSelector()}
+        {yearsWarming && !yearsError && years === null && (
+          <p className="text-muted-foreground mt-1 text-xs">
+            The backend is starting up — first load can take up to 60 seconds.
+          </p>
         )}
       </div>
 
@@ -113,7 +152,7 @@ export function TaxCalculator() {
         rules={rules}
       />
 
-      {rulesState.kind === 'loading' && (
+      {years !== null && rulesState.kind === 'loading' && (
         <p className="text-zinc-600 dark:text-zinc-400">Loading tax rules…</p>
       )}
 
