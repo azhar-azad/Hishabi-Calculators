@@ -66,9 +66,59 @@ NBR released the AY 2026-27 individual schedule with changed values (General thr
 
 ---
 
+## Phase 8 — Zakat calculator
+
+Second platform calculator. Source of truth: the **As-Sunnah Foundation** online Zakat calculator (full **28-field** replica). Mirrors the tax module's data-driven pattern (Flyway-seeded constants → pure calc service → facade → Next.js feature). Key decisions: nisab basis **user-selectable** (gold/silver, default silver); rate **calendar-driven** (Hijri 2.5% / English-solar 2.6%); gold/silver valued at **83% of BAJUS price** (live fetch → DB cache, **daily** refresh, stale fallback) with weight in grams or **Vori/Ana/Roti/Point**; history **deferred**. Full design + worked examples in PLAN.md §13.
+
+### 8.0 — Docs *(chore, docs-only)*
+- [x] PLAN.md §2 decisions-log row for Zakat
+- [x] PLAN.md §13 — full Zakat rules (model, 28 fields, nisab, calendar rate, BAJUS, weight units, worked examples, data model)
+- [x] PROGRESS.md Phase 8 plan (this section)
+- [ ] Commit `chore(docs): document Zakat calculator plan + As-Sunnah rules`; push
+
+### 8.1 — Backend: schema + calc service + config/calculate *(high-risk: money + migration)*
+- [ ] `V8__create_zakat_tables.sql`: `zakat_rule_set` + `metal_price`
+- [ ] `V9__seed_zakat_rules.sql`: rule set row (612.36 / 87.48 / 0.83 / 0.025 / 0.026) + initial `metal_price` snapshot
+- [ ] Entities (`ZakatRuleSet`, `MetalPrice`) + repos; DTOs (`ZakatCalculationRequest` w/ `nisabBasis`+`calendarType`+21 assets+7 deductions; `ZakatCalculationResponse`; `ZakatConfigResponse`)
+- [ ] `ZakatCalculationService` (pure): Σ assets − Σ deductions, floor at 0, nisab compare by basis, rate by calendar
+- [ ] `ZakatCalculationFacade`: resolve config + nisab from cache; persist if authenticated (`CalculatorType.ZAKAT`)
+- [ ] Controller `GET /config` + `POST /calculate`; add both to `SecurityConfig` public allow-list
+- [ ] Tests: service worked examples (below-nisab→0; English 2.6% & Hijri 2.5%; gold vs silver nisab; deductions; net floored at 0); config + calculate controller; Testcontainers persistence of seeded rule set
+- [ ] `./mvnw verify` green; self code-review (high — money); independent `code-reviewer` subagent
+- [ ] Commit `feat(zakat): rule schema + calculation service + config/calculate endpoints`; push
+
+### 8.2 — Backend: BAJUS live price + cache/fallback + metal-value *(high-risk: external I/O + money)*
+- [ ] `pom.xml`: add Jsoup
+- [ ] `BajusPriceService`: browser-header `RestClient` fetch, Jsoup parse, upsert `metal_price`, daily `@Scheduled` + `ApplicationReadyEvent` fetch, stale detection
+- [ ] `WeightUnit` enum + grams conversion (Gram/Vori/Ana/Roti/Point)
+- [ ] `POST /metal-value` endpoint (items `{metal,carat,quantity,unit}` → per-item + total selling value + `{fetchedAt,stale}`); add to allow-list
+- [ ] Thread `priceFetchedAt`/`priceStale` into config + calculate responses; nisab calibration vs live As-Sunnah figure
+- [ ] Tests: parser against saved BAJUS HTML fixture; fallback-to-cache (fetch fails → stale); weight-unit conversion; metal-value endpoint
+- [ ] `./mvnw verify` green; self code-review (high); independent `code-reviewer` subagent
+- [ ] Commit `feat(zakat): BAJUS live price with DB cache + stale fallback`; push
+
+### 8.3 — Frontend: form + breakdown + config wrapper
+- [ ] Read `node_modules/next/dist/docs/` (non-standard Next.js per `frontend/AGENTS.md`)
+- [ ] `features/zakat/`: `schema.ts` (zod, 28 fields + `calendarType` + `nisabBasis`), `types.ts`
+- [ ] `ZakatCalculator` (fetch `/config`, nisab-basis selector + nisab display/stale note), `ZakatCalculatorForm` (2-step wizard, all 28 fields, calendar select + date), `ZakatBreakdown`
+- [ ] `app/calculators/zakat/page.tsx` route; flip home-card from "Coming soon" to a live link
+- [ ] Tests (`__tests__/`): all fields render; calculate payload shape; breakdown shows nisab / below-nisab / zakat + rate
+- [ ] `npm run lint && npm test` green; self code-review
+- [ ] Commit `feat(frontend-zakat): calculator form + breakdown`; push
+
+### 8.4 — Frontend: price helper modal + stale indicators + E2E + PR
+- [ ] `MetalPriceModal` (items: name, quantity, unit selector Gram/Vori/Ana/Roti/Point, carat, Add More) → `POST /metal-value` → total + stale indicator → Confirm writes value into gold/silver field (field stays directly editable)
+- [ ] Stale indicators on nisab + prices
+- [ ] Tests (modal + stale states)
+- [ ] End-to-end via preview tools: both calendar types (2.5% vs 2.6%), below/above nisab, price helper total, simulated stale fallback
+- [ ] CI green after push; open PR `code` → `main`
+- [ ] Commit `feat(frontend-zakat): live price helper + stale indicators`; push
+
+---
+
 ## Future phases
 
-- [ ] **Zakat calculator** — repeat Phases 3–4 under `calculators/zakat/` (will be sliced when started)
+- [ ] **Zakat history** — wire `CalculatorType.ZAKAT` into save-on-calc + the account/history view (deferred from Phase 8)
 - [ ] **Mobile app** — pick stack (React Native vs Flutter vs native) based on user comfort at that point
 - [ ] **Analytics / error tracking** — opt-in (see PLAN.md §11)
 - [ ] **i18n** — Bengali + English (likely needed for BD audience; confirm with user)

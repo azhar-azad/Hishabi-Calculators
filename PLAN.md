@@ -48,6 +48,7 @@ A web-first platform hosting multiple calculators under one brand. Each calculat
 | Frontend form stack      | react-hook-form + zod (+ shadcn Input/Select/Label/Card) | 2026-06-02 |
 | Calc service structure   | Step methods (pure functions, local finals) — not Chain-of-Responsibility. CoR is a poor fit for fixed-order money math; typed returns are clearer than a mutable shared context. Revisit only if wealth surcharge adds year-varying steps. | 2026-05-30 |
 | AY 2026-27 rules added    | New `RuleSet` (id=2) — General threshold 350k→375k, new slab ladder (no 5% band, 35% top rate), rebate eligible-fraction 15%→10%, rebate cap 1,000,000→750,000. Frontend gains a year selector + `/years` endpoint. See §12. | 2026-06-20 |
+| Zakat calculator added    | Second calculator. Source of truth: **As-Sunnah Foundation** online calculator. Full **28-field** replica; nisab basis **user-selectable** (gold/silver, default silver); rate **calendar-driven** (Hijri 2.5% / English-solar 2.6%); gold/silver valued at **83% of BAJUS price** (live fetch → DB cache, **daily** refresh, stale fallback); helper weight in grams or **Vori/Ana/Roti/Point**. History deferred. See §13. | 2026-06-21 |
 
 Add a new row whenever a decision is made or changed.
 
@@ -379,3 +380,139 @@ Same inputs as §10.8 (basic 1,611,000; Sanchay Patra 200,000 + DPS 120,000; Gen
 | **Net tax** | **75,200** |
 
 This is the AY 2026-27 regression anchor (`TaxCalculationServiceTest`).
+
+## 13. Zakat Rules (Bangladesh, individual)
+
+Source of truth: the **As-Sunnah Foundation** online Zakat calculator
+(`assunnahfoundation.org/zakat-calculator`), by Shaykh Ahmadullah's organization. Captured via
+screenshots (the page is JS-rendered; direct fetch is blocked). Like tax, this section is **data,
+not code** — the constants live in DB rows (`zakat_rule_set`) and the calculation service is a pure
+function over them. Unlike tax there is **no assessment-year concept**: a single active rule set.
+
+### 13.0 Model overview
+
+```
+netWealth     = Σ(21 zakatable asset fields) − Σ(7 deduction fields)   (floored at 0)
+aboveNisab    = netWealth ≥ nisab
+zakatPayable  = aboveNisab ? netWealth × rate : 0     (else "below nisab" message)
+```
+
+The arithmetic is trivial; the substance is the **field set**, the **nisab** (threshold), the
+**rate** (calendar-driven), and the **gold/silver valuation** (live BAJUS price). Monetary rounding
+reuses the tax policy: 2 dp, HALF_UP (a zakat-local `Money`).
+
+### 13.1 Inputs
+
+**Header:** `nisabBasis` (`GOLD` | `SILVER`, default `SILVER`), `calendarType` (`ENGLISH` |
+`HIJRI`), `zakatYearEndDate` (informational). All money fields are BDT, `≥ 0`, default 0 (blank UI
+inputs → 0).
+
+**Assets (21)** — `gold`, `silver` (BDT selling values — see §13.4), `cashInHand`,
+`foreignCurrency`, `bankDeposits` (principal excl. interest), `savingsInstruments`
+(bond/debenture/T-bill at purchase price), `refundableInsurancePremium`, `optionalProvidentFund`
+(excl. compulsory), `recoverableLoans` (good debt), `depositsPlacedWithOthers`,
+`refundableRentSecurity`, `refundableOtherSecurity`, `businessCash`, `customerReceivables`,
+`tradeStock` (ready/manufactured/raw/WIP at wholesale selling price), `tradeAssetsForResale`
+(land/flats/cars held to resell), `mudarabaShareNetKnown`, `mudarabaPrincipal`,
+`shareMarketCapitalGain`, `shareDividendNetKnown`, `shareDividendMarketValue`.
+
+> The mudaraba (17/18) and share-dividend (20/21) pairs are dual-path: enter the *net zakatable
+> share if known*, else the *principal / market value*. They are independent inputs — the user fills
+> whichever applies; both are summed if both are provided.
+
+**Deductions (7)** — `personalLoanDueWithinYear`, `businessLoanDueWithinYear`,
+`installmentPurchasesDueWithinYear`, `unpaidDowryDueWithinYear`, `unpaidEmployeeWages`,
+`payableBillsAndTaxes`, `priorYearUnpaidZakat`. Per As-Sunnah, debts count only for **the portion
+payable within the next year**; prior-year unpaid Zakat is itself deductible.
+
+### 13.2 Nisab (threshold)
+
+As-Sunnah uses the **silver** basis only: `612.36 g silver × silver price` (their live figure was
+**৳173,250** on 20/06/2026 ⇒ implied silver ≈ ৳282.9/g). **We extend this: the user picks gold or
+silver**, defaulting to silver (lower threshold, the cautious/charitable choice).
+
+```
+silverNisab = 612.36 g × silverPricePerGram × resaleFactor
+goldNisab   =  87.48 g × goldPricePerGram   × resaleFactor
+nisab       = nisabBasis == GOLD ? goldNisab : silverNisab
+```
+
+Weights and `resaleFactor` are `zakat_rule_set` columns; the per-gram prices come from the live
+BAJUS cache (§13.6). Calibrate the silver grade so `silverNisab` tracks As-Sunnah's published value.
+
+### 13.3 Rate (calendar-driven)
+
+The "Zakat year type" selector drives the rate:
+
+| Calendar | Rate | Why |
+| --- | ---: | --- |
+| Hijri / Arabic (lunar) | **2.5%** | The canonical 1/40 on a lunar year (~354.37 d) |
+| English (solar) | **2.6%** | Solar year (365.25 d) is ~3.07% longer ⇒ 2.5% × 1.031 ≈ 2.577% → 2.6% |
+
+Stored as `rate_lunar` (0.0250) / `rate_solar` (0.0260) in `zakat_rule_set`.
+
+### 13.4 Gold / silver valuation
+
+The `gold` and `silver` asset fields hold a **BDT selling value**, entered two ways:
+
+1. **Direct** — type the value (e.g. a jeweller already quoted the resale price).
+2. **Price helper** — value holdings at **83% of BAJUS market price** (As-Sunnah's stated resale
+   factor; BAJUS publishes retail). Per item: *quantity × carat (22/21/18/traditional)*. Weight may
+   be **grams or traditional units**, converted to grams server-side:
+
+   | Unit | Grams | Relation |
+   | --- | ---: | --- |
+   | Gram | 1 | — |
+   | Vori (bhori/tola) | 11.664 | 1 Vori = 16 Ana = 96 Roti = 960 Point |
+   | Ana | 0.729 | Vori / 16 |
+   | Roti | 0.1215 | Vori / 96 |
+   | Point | 0.012150 | Vori / 960 |
+
+   `sellingValue = grams × pricePerGram × resaleFactor`, summed across items.
+
+### 13.5 Formula
+
+See §13.0. `netWealth` is floored at 0 (deductions exceeding assets yield 0, never negative).
+`rate` per §13.3; `nisab` per §13.2. Below nisab → no Zakat due (show the "below nisab" message with
+the threshold). Persisted to history when authenticated (reuse `Calculation` + `CalculatorType.ZAKAT`).
+
+### 13.6 BAJUS price integration
+
+Gold/silver per-gram prices are fetched from BAJUS (`bajus.org/gold-price`) and cached in
+`metal_price` (one row per `metal`+`carat`, raw market price + `fetched_at`).
+
+- BAJUS **403s default HTTP clients** → fetch with browser-like headers (User-Agent, Accept); parse
+  HTML with Jsoup.
+- **Daily** scheduled refresh + a startup fetch; user requests always serve from the cache (fast, no
+  per-request scraping, low ban risk).
+- On any fetch failure the last good rows stay; a **stale flag** (cache older than a freshness
+  threshold) is surfaced in the UI ("price from {timestamp}"). An initial price snapshot is seeded
+  so the app works before the first live fetch. If BAJUS ever blocks server IPs entirely, the table
+  is manually updatable as a fallback.
+
+### 13.7 Worked examples (regression anchors)
+
+Silver nisab assumed **173,250** (per the seeded snapshot); gold examples use the gold nisab.
+
+| Case | Inputs | Nisab | Rate | Zakat |
+| --- | --- | ---: | ---: | ---: |
+| Below nisab | net 150,000, silver | 173,250 | — | **0** (below-nisab message) |
+| Above, solar | net 1,000,000, silver, English | 173,250 | 2.6% | **26,000** |
+| Above, lunar | net 1,000,000, silver, Hijri | 173,250 | 2.5% | **25,000** |
+| With deductions | assets 1,200,000 − deductions 250,000 = 950,000, silver, Hijri | 173,250 | 2.5% | **23,750** |
+
+### 13.8 Data model
+
+- **`zakat_rule_set`** (single row, id=1): `name`, `nisab_basis`, `nisab_silver_grams` (612.36),
+  `nisab_gold_grams` (87.48), `resale_factor` (0.8300), `rate_lunar` (0.0250), `rate_solar` (0.0260).
+- **`metal_price`** (cache, one row per `metal`+`carat`): `metal` (`GOLD`/`SILVER`), `carat`
+  (`22`/`21`/`18`/`TRADITIONAL`), `price_per_gram` (raw BAJUS market price), `source`, `fetched_at`.
+
+### 13.9 Scope notes
+
+- **Divergence from As-Sunnah:** offering a **gold-nisab** option extends beyond the source (which is
+  silver-only and even says the tool isn't applicable to gold-only holders). Default stays silver.
+- **History deferred** to a later slice — calculation works for anonymous and logged-in users; saving
+  + the account/history view come afterward.
+- **Disclaimers** from As-Sunnah are reproduced in the UI: "this is an aid; verify with a scholar"
+  and privacy ("no data is stored").
