@@ -74,18 +74,18 @@ Second platform calculator. Source of truth: the **As-Sunnah Foundation** online
 - [x] PLAN.md §2 decisions-log row for Zakat
 - [x] PLAN.md §13 — full Zakat rules (model, 28 fields, nisab, calendar rate, BAJUS, weight units, worked examples, data model)
 - [x] PROGRESS.md Phase 8 plan (this section)
-- [ ] Commit `chore(docs): document Zakat calculator plan + As-Sunnah rules`; push
+- [x] Commit `chore(docs): document Zakat calculator plan + As-Sunnah rules`; push
 
 ### 8.1 — Backend: schema + calc service + config/calculate *(high-risk: money + migration)*
-- [ ] `V8__create_zakat_tables.sql`: `zakat_rule_set` + `metal_price`
-- [ ] `V9__seed_zakat_rules.sql`: rule set row (612.36 / 87.48 / 0.83 / 0.025 / 0.026) + initial `metal_price` snapshot
-- [ ] Entities (`ZakatRuleSet`, `MetalPrice`) + repos; DTOs (`ZakatCalculationRequest` w/ `nisabBasis`+`calendarType`+21 assets+7 deductions; `ZakatCalculationResponse`; `ZakatConfigResponse`)
-- [ ] `ZakatCalculationService` (pure): Σ assets − Σ deductions, floor at 0, nisab compare by basis, rate by calendar
-- [ ] `ZakatCalculationFacade`: resolve config + nisab from cache; persist if authenticated (`CalculatorType.ZAKAT`)
-- [ ] Controller `GET /config` + `POST /calculate`; add both to `SecurityConfig` public allow-list
-- [ ] Tests: service worked examples (below-nisab→0; English 2.6% & Hijri 2.5%; gold vs silver nisab; deductions; net floored at 0); config + calculate controller; Testcontainers persistence of seeded rule set
-- [ ] `./mvnw verify` green; self code-review (high — money); independent `code-reviewer` subagent
-- [ ] Commit `feat(zakat): rule schema + calculation service + config/calculate endpoints`; push
+- [x] `V8__create_zakat_tables.sql`: `zakat_rule_set` + `metal_price`
+- [x] `V9__seed_zakat_rules.sql`: rule set row (612.36 / 87.48 / 0.83 / 0.025 / 0.026) + initial `metal_price` snapshot (silver 340.87 BDT/g → nisab ≈ 173,250; `TIMESTAMP WITH TIME ZONE` for H2 compat)
+- [x] Entities (`ZakatRuleSet`, `MetalPrice`) + repos; DTOs (`ZakatCalculationRequest` w/ `nisabBasis`+`calendarType`+21 assets+7 deductions; `ZakatCalculationResponse`; `ZakatConfigResponse`)
+- [x] `ZakatCalculationService` (pure): Σ assets − Σ deductions, floor at 0, nisab compare by basis, rate by calendar
+- [x] `ZakatCalculationFacade`: resolve config + nisab from cache; persist if authenticated (`CalculatorType.ZAKAT`)
+- [x] Controller `GET /config` + `POST /calculate`; add both to `SecurityConfig` public allow-list
+- [x] Tests: 13 service tests (below/at/above nisab; English 2.6% & Hijri 2.5%; gold vs silver nisab; deductions; net floored at 0; stale passthrough); config + calculate controller; Testcontainers persistence of seeded rule set
+- [x] `./mvnw verify`: 89 tests, 0 failures, 11 Docker errors (all pre-existing Testcontainers pattern, CI green); self code-review (high — 8 angles); independent subagent review — 2 low-sev findings (stale seed cliff noted for Slice 8.2; at-nisab boundary test added)
+- [x] Commit `feat(zakat): rule schema + calculation service + config/calculate endpoints`; push
 
 ### 8.2 — Backend: BAJUS live price + cache/fallback + metal-value *(high-risk: external I/O + money)*
 - [ ] `pom.xml`: add Jsoup
